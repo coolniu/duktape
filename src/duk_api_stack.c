@@ -239,6 +239,7 @@ DUK_EXTERNAL duk_idx_t duk_require_normalize_index(duk_context *ctx, duk_idx_t i
 	if (DUK_LIKELY(uindex < vs_size)) {
 		return (duk_idx_t) uindex;
 	}
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_API_ERROR, DUK_STR_INVALID_INDEX);
 	return 0;  /* unreachable */
 }
@@ -297,6 +298,7 @@ DUK_INTERNAL duk_tval *duk_require_tval(duk_context *ctx, duk_idx_t index) {
 	if (DUK_LIKELY(uindex < vs_size)) {
 		return thr->valstack_bottom + uindex;
 	}
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_API_ERROR, DUK_STR_INVALID_INDEX);
 	return NULL;
 }
@@ -317,6 +319,7 @@ DUK_EXTERNAL void duk_require_valid_index(duk_context *ctx, duk_idx_t index) {
 	DUK_ASSERT(DUK_INVALID_INDEX < 0);
 
 	if (duk_normalize_index(ctx, index) < 0) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_API_ERROR, DUK_STR_INVALID_INDEX);
 	}
 }
@@ -452,6 +455,7 @@ DUK_EXTERNAL duk_idx_t duk_require_top_index(duk_context *ctx) {
 
 	ret = ((duk_idx_t) (thr->valstack_top - thr->valstack_bottom)) - 1;
 	if (DUK_UNLIKELY(ret < 0)) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_API_ERROR, DUK_STR_INVALID_INDEX);
 	}
 	return ret;
@@ -1066,6 +1070,7 @@ DUK_EXTERNAL void duk_require_undefined(duk_context *ctx, duk_idx_t index) {
 		/* Note: accept both 'actual' and 'unused' undefined */
 		return;
 	}
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_UNDEFINED);
 }
 
@@ -1079,6 +1084,7 @@ DUK_EXTERNAL void duk_require_null(duk_context *ctx, duk_idx_t index) {
 	if (tv && DUK_TVAL_IS_NULL(tv)) {
 		return;
 	}
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_NULL);
 	return;  /* not reachable */
 }
@@ -1111,6 +1117,7 @@ DUK_EXTERNAL duk_bool_t duk_require_boolean(duk_context *ctx, duk_idx_t index) {
 		return ret;
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_BOOLEAN);
 	return 0;  /* not reachable */
 }
@@ -1156,6 +1163,7 @@ DUK_EXTERNAL duk_double_t duk_require_number(duk_context *ctx, duk_idx_t index) 
 		return ret.d;
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_NUMBER);
 	return DUK_DOUBLE_NAN;  /* not reachable */
 }
@@ -1226,6 +1234,7 @@ DUK_EXTERNAL const char *duk_require_lstring(duk_context *ctx, duk_idx_t index, 
 		return ret;
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_STRING);
 	return NULL;  /* not reachable */
 }
@@ -1271,6 +1280,7 @@ DUK_EXTERNAL void *duk_require_pointer(duk_context *ctx, duk_idx_t index) {
 		return (void *) p;
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_POINTER);
 	return NULL;  /* not reachable */
 }
@@ -1314,6 +1324,7 @@ DUK_LOCAL void *duk__get_buffer_helper(duk_context *ctx, duk_idx_t index, duk_si
 	}
 
 	if (throw_flag) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_BUFFER);
 	}
 	return NULL;
@@ -1376,6 +1387,7 @@ DUK_LOCAL void *duk__get_buffer_data_helper(duk_context *ctx, duk_idx_t index, d
 
  fail:
 	if (throw_flag) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_BUFFER);
 	}
 	return NULL;
@@ -1431,6 +1443,7 @@ DUK_INTERNAL duk_heaphdr *duk_get_tagged_heaphdr_raw(duk_context *ctx, duk_idx_t
 	 * is Duktape internal (not the same as DUK_TYPE_xxx) and even depends
 	 * on the duk_tval layout.  If anything, add a human readable type here.
 	 */
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_UNEXPECTED_TYPE);
 	return NULL;  /* not reachable */
 }
@@ -1490,6 +1503,7 @@ DUK_INTERNAL duk_hcompiledfunction *duk_require_hcompiledfunction(duk_context *c
 	duk_hobject *h = (duk_hobject *) duk_get_tagged_heaphdr_raw(ctx, index, DUK_TAG_OBJECT);
 	DUK_ASSERT(h != NULL);
 	if (!DUK_HOBJECT_IS_COMPILEDFUNCTION(h)) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_COMPILEDFUNCTION);
 	}
 	return (duk_hcompiledfunction *) h;
@@ -1508,6 +1522,7 @@ DUK_INTERNAL duk_hnativefunction *duk_require_hnativefunction(duk_context *ctx, 
 	duk_hobject *h = (duk_hobject *) duk_get_tagged_heaphdr_raw(ctx, index, DUK_TAG_OBJECT);
 	DUK_ASSERT(h != NULL);
 	if (!DUK_HOBJECT_IS_NATIVEFUNCTION(h)) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_NATIVEFUNCTION);
 	}
 	return (duk_hnativefunction *) h;
@@ -1547,6 +1562,7 @@ DUK_EXTERNAL duk_c_function duk_require_c_function(duk_context *ctx, duk_idx_t i
 
 	ret = duk_get_c_function(ctx, index);
 	if (!ret) {
+		/* FIXME: error msg with index */
 		DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_NOT_C_FUNCTION);
 	}
 	return ret;
@@ -1595,6 +1611,8 @@ DUK_EXTERNAL void *duk_require_heapptr(duk_context *ctx, duk_idx_t index) {
 		return ret;
 	}
 
+	/* FIXME: message should be 'not heapptr'? */
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_UNEXPECTED_TYPE);
 	return (void *) NULL;  /* not reachable */
 }
@@ -1646,6 +1664,7 @@ DUK_INTERNAL duk_hobject *duk_require_hobject_or_lfunc(duk_context *ctx, duk_idx
 		return NULL;
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_UNEXPECTED_TYPE);
 	return NULL;  /* not reachable */
 }
@@ -1668,6 +1687,7 @@ DUK_INTERNAL duk_hobject *duk_require_hobject_or_lfunc_coerce(duk_context *ctx, 
 		return duk_require_hobject(ctx, index);
 	}
 
+	/* FIXME: error msg with index */
 	DUK_ERROR(thr, DUK_ERR_TYPE_ERROR, DUK_STR_UNEXPECTED_TYPE);
 	return NULL;  /* not reachable */
 }
