@@ -189,6 +189,9 @@
 
 #include "duk_unicode_caseconv.h"
 
+/* FIXME: CONDITIONAL */
+#include "duk_unicode_re_canon_lookup.h"
+
 /*
  *  Extern
  */

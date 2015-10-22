@@ -54,3 +54,6 @@
 /* duk_unicode_caseconv_lc[] */
 
 #include "duk_unicode_caseconv.c"
+
+/* FIXME: CONDITIONAL */
+#include "duk_unicode_re_canon_lookup.c"

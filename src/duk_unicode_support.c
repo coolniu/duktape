@@ -947,6 +947,14 @@ DUK_INTERNAL void duk_unicode_case_convert_string(duk_hthread *thr, duk_small_in
  */
 
 DUK_INTERNAL duk_codepoint_t duk_unicode_re_canonicalize_char(duk_hthread *thr, duk_codepoint_t cp) {
+#if 1  /* FIXME */
+	/* Fast canonicalization lookup at the cost of 128kB footprint. */
+	DUK_ASSERT(cp >= 0);
+	if (DUK_LIKELY(cp < 0x10000L)) {
+		return (duk_codepoint_t) duk_unicode_re_canon_lookup[cp];
+	}
+	return cp;
+#else
 	duk_codepoint_t y;
 
 	y = duk__case_transform_helper(thr,
@@ -964,6 +972,7 @@ DUK_INTERNAL duk_codepoint_t duk_unicode_re_canonicalize_char(duk_hthread *thr, 
 	}
 
 	return y;
+#endif
 }
 
 /*
