@@ -1161,6 +1161,9 @@ Planned
 
 * Fix nested property assignment handling (GH-427, GH-428)
 
+* Fix assignment expression handling of a property access LHS when the base
+  value is mutated by other parts of the expression (GH-FIXME)
+
 * Fix Unix local time offset handling which caused issues at least on RISC
   OS (GH-406, GH-407)
 
