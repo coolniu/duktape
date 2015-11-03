@@ -3831,7 +3831,13 @@ DUK_LOCAL void duk__expr_led(duk_compiler_ctx *comp_ctx, duk_ivalue *left, duk_i
 		 * there?
 		 */
 
-		duk__ivalue_toplain(comp_ctx, left);
+		/* The 'left' value must not be a register bound variable
+		 * because it may be mutated during the rest of the expression
+		 * and E5.1 Section 11.2.1 specifies the order of evaluation
+		 * so that the base value is evaluated first.
+		 * See: test-bug-nested-prop-mutate.js.
+		 */
+		duk__ivalue_totempconst(comp_ctx, left);
 		duk__expr_toplain(comp_ctx, res, DUK__BP_FOR_EXPR /*rbp_flags*/);  /* Expression, ']' terminates */
 		duk__advance_expect(comp_ctx, DUK_TOK_RBRACKET);
 
