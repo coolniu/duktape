@@ -245,7 +245,8 @@ function executeTest(options, callback) {
         execopts = {
             maxBuffer: 128 * 1024 * 1024,
             timeout: timeout,
-            stdio: 'pipe'
+            stdio: 'pipe',
+            killSignal: 'SIGKILL'
         };
 
         //console.log(cmdline);
@@ -266,23 +267,28 @@ function executeTest(options, callback) {
         // FIXME: listing specific options here is awkward, must match Makefile
         cmd = [ 'gcc', '-o', tempExe,
                 '-L.',
-                '-Idist/src',
+                '-Iprep/nondebug',  // this particularly is awkward
                 '-Wl,-rpath,.',
-                '-pedantic', '-ansi', '-std=c99', '-Wall', '-fstrict-aliasing', '-D__POSIX_C_SOURCE=200809L', '-D_GNU_SOURCE', '-D_XOPEN_SOURCE', '-Os', '-fomit-frame-pointer',
+                '-pedantic', '-ansi', '-std=c99', '-Wall', '-Wdeclaration-after-statement', '-fstrict-aliasing', '-D_POSIX_C_SOURCE=200809L', '-D_GNU_SOURCE', '-D_XOPEN_SOURCE', '-Os', '-fomit-frame-pointer',
                 '-g', '-ggdb',
-                '-Werror',
+                //'-Werror',  // Would be nice but GCC differences break tests too easily
                 //'-m32',
                 'runtests/api_testcase_main.c',
                 tempSource,
                 '-lduktape',
                 //'-lduktaped',
-                '-lm' ];
+                '-lm'
+        ];
+        if (options.testcase.meta.pthread) {
+            cmd.push('-lpthread');
+        }
 
         cmdline = cmd.join(' ');
         execopts = {
             maxBuffer: 128 * 1024 * 1024,
             timeout: timeout,
-            stdio: 'pipe'
+            stdio: 'pipe',
+            killSignal: 'SIGKILL'
         };
 
         console.log(options.testPath, cmdline);
@@ -368,7 +374,7 @@ var API_TEST_HEADER =
     "\t\tduk_ret_t _rc; \\\n" +
     "\t\tprintf(\"*** %s (duk_safe_call)\\n\", #func); \\\n" +
     "\t\tfflush(stdout); \\\n" +
-    "\t\t_rc = duk_safe_call(ctx, (func), 0, 1); \\\n" +
+    "\t\t_rc = duk_safe_call(ctx, (func), NULL, 0, 1); \\\n" +
     "\t\tprintf(\"==> rc=%d, result='%s'\\n\", (int) _rc, duk_safe_to_string(ctx, -1)); \\\n" +
     "\t\tfflush(stdout); \\\n" +
     "\t\tduk_pop(ctx); \\\n" +

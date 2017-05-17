@@ -17,9 +17,9 @@
 
 /*===
 *** test_invalid_index (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: object required, found none (stack index -1)'
 *** test_invalid_target (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: object required, found 123 (stack index -1)'
 *** test_basic (duk_safe_call)
 build replacement global object
 top before: 1
@@ -69,7 +69,7 @@ ctx1
 object
 set proto foo to quux
 set proto bar to proto itself for comparison
-result: /(?:)/
+result: undefined
 ctx2
 object
 foo: quux
@@ -157,8 +157,10 @@ static void dump_global_object_keys(duk_context *ctx) {
 		"})()\n");
 }
 
-static duk_ret_t test_invalid_index(duk_context *ctx_root) {
+static duk_ret_t test_invalid_index(duk_context *ctx_root, void *udata) {
 	duk_context *ctx;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx = duk_require_context(ctx_root, -1);
@@ -168,8 +170,10 @@ static duk_ret_t test_invalid_index(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_invalid_target(duk_context *ctx_root) {
+static duk_ret_t test_invalid_target(duk_context *ctx_root, void *udata) {
 	duk_context *ctx;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx = duk_require_context(ctx_root, -1);
@@ -179,8 +183,10 @@ static duk_ret_t test_invalid_target(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_basic(duk_context *ctx_root) {
+static duk_ret_t test_basic(duk_context *ctx_root, void *udata) {
 	duk_context *ctx;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx = duk_require_context(ctx_root, -1);
@@ -237,8 +243,10 @@ static duk_ret_t test_basic(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_noeval(duk_context *ctx_root) {
+static duk_ret_t test_noeval(duk_context *ctx_root, void *udata) {
 	duk_context *ctx;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx = duk_require_context(ctx_root, -1);
@@ -281,8 +289,10 @@ static duk_ret_t test_noeval(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_regexp_literals(duk_context *ctx_root) {
+static duk_ret_t test_regexp_literals(duk_context *ctx_root, void *udata) {
 	duk_context *ctx;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx = duk_require_context(ctx_root, -1);
@@ -316,9 +326,11 @@ static duk_ret_t test_regexp_literals(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_regexp_prototype_shared(duk_context *ctx_root) {
+static duk_ret_t test_regexp_prototype_shared(duk_context *ctx_root, void *udata) {
 	duk_context *ctx1;
 	duk_context *ctx2;
+
+	(void) udata;
 
 	/*
 	 *  The RegExp constructor (built-in) is shared between two
@@ -366,13 +378,15 @@ static duk_ret_t test_regexp_prototype_shared(duk_context *ctx_root) {
 	duk_eval_string_noresult(ctx1, "var re1 = /foo/;\n");
 	duk_eval_string_noresult(ctx2, "var re2 = /bar/;\n");
 
+	/* avoid String coercing RegExp.prototype; it's a TypeError in ES2015/ES2016 */
+
 	(void) duk_peval_string(ctx1,
 		"print(name);\n"
 		"print(typeof getProto(re1));\n"
 		"print('set proto foo to quux');\n"
 		"getProto(re1).foo = 'quux';\n"
 		"print('set proto bar to proto itself for comparison');\n"
-		"getProto(re1).bar = getProto(re1);\n");
+		"getProto(re1).bar = getProto(re1); void 0;\n");
 	printf("result: %s\n", duk_safe_to_string(ctx1, -1));
 	duk_pop(ctx1);
 
@@ -396,9 +410,11 @@ static duk_ret_t test_regexp_prototype_shared(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_set_after_thread_create(duk_context *ctx_root) {
+static duk_ret_t test_set_after_thread_create(duk_context *ctx_root, void *udata) {
 	duk_context *ctx1;
 	duk_context *ctx2;
+
+	(void) udata;
 
 	duk_push_thread(ctx_root);
 	ctx1 = duk_require_context(ctx_root, -1);
@@ -470,10 +486,12 @@ static duk_ret_t test_set_after_thread_create(duk_context *ctx_root) {
 	return 0;
 }
 
-static duk_ret_t test_set_before_thread_create(duk_context *ctx_root) {
+static duk_ret_t test_set_before_thread_create(duk_context *ctx_root, void *udata) {
 	duk_context *ctx1;
 	duk_context *ctx2;
 	duk_context *ctx3;
+
+	(void) udata;
 
 	/*
 	 *  Creating a new thread using duk_push_thread() after setting

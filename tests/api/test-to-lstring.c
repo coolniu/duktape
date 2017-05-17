@@ -29,28 +29,30 @@ index 12, string: '[object Object]', length 15
 index 12, string: '[object Object]'
 index 13, string: '[object Thread]', length 15
 index 13, string: '[object Thread]'
-index 14, string: '', length 0
-index 14, string: ''
-index 15, string: 'abcdefghijklmnop', length 16
-index 15, string: 'abcdefghijklmnop'
-index 16, string: '', length 0
-index 16, string: ''
-index 17, string: 'abcdefghijklmnop', length 16
-index 17, string: 'abcdefghijklmnop'
+index 14, string: '[object Uint8Array]', length 19
+index 14, string: '[object Uint8Array]'
+index 15, string: '[object Uint8Array]', length 19
+index 15, string: '[object Uint8Array]'
+index 16, string: '[object Uint8Array]', length 19
+index 16, string: '[object Uint8Array]'
+index 17, string: '[object Uint8Array]', length 19
+index 17, string: '[object Uint8Array]'
 index 18, string: 'null', length 4
 index 18, string: 'null'
 index 19, string: '0xdeadbeef', length 10
 index 19, string: '0xdeadbeef'
 ==> rc=0, result='undefined'
 *** test_2 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index 3'
 *** test_3 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index -2147483648'
 ===*/
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_1(duk_context *ctx, void *udata) {
 	duk_int_t i, j, n;
 	char *ptr;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 	duk_push_undefined(ctx);
@@ -78,7 +80,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 		ptr[i] = (char) ('a' + i);
 	}
 	duk_push_pointer(ctx, (void *) NULL);
-	duk_push_pointer(ctx, (void *) 0xdeadbeef);
+	duk_push_pointer(ctx, (void *) 0xdeadbeefUL);
 
 	n = duk_get_top(ctx);
 	printf("top: %ld\n", (long) n);
@@ -87,7 +89,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 		duk_size_t sz;
 
 		duk_dup(ctx, i);
-		sz = (duk_size_t) 0xdeadbeef;
+		sz = (duk_size_t) 0xdeadbeefUL;
 		p = (const unsigned char *) duk_to_lstring(ctx, -1, &sz);
 		printf("index %ld, string: '", (long) i);
 		for (j = 0; j < sz; j++) {
@@ -101,7 +103,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 		duk_pop(ctx);
 
 		duk_dup(ctx, i);
-		sz = (duk_size_t) 0xdeadbeef;
+		sz = (duk_size_t) 0xdeadbeefUL;
 		p = (const unsigned char *) duk_to_lstring(ctx, -1, NULL);
 		printf("index %ld, string: '%s'\n", (long) i, (const char *) p);
 		duk_pop(ctx);
@@ -110,9 +112,11 @@ static duk_ret_t test_1(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_2(duk_context *ctx, void *udata) {
 	const char *p;
 	duk_size_t sz;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 	p = duk_to_lstring(ctx, 3, &sz);
@@ -120,9 +124,11 @@ static duk_ret_t test_2(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_3(duk_context *ctx, void *udata) {
 	const char *p;
 	duk_size_t sz;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 	p = duk_to_lstring(ctx, DUK_INVALID_INDEX, &sz);

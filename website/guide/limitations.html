@@ -43,9 +43,9 @@ a "no match" result but hits an internal recursion limit instead:</p>
 $ duk
 duk&gt; t = /(x*)*/.exec('y');
 RangeError: regexp executor recursion limit
-        duk_regexp_executor.c:145
-        exec (null) native strict preventsyield
-        global input:1 preventsyield
+    at [anon] (duk_regexp_executor.c:145) internal
+    at exec () native strict preventsyield
+    at global (input:1) preventsyield
 </pre>
 
 <h2>Duktape does not fully support locales</h2>
@@ -139,8 +139,9 @@ an automatic prototype object created for the function.  The function instance's
 <code>prototype</code> property points to the prototype object, and the prototype's
 <code>constructor</code> property points back to the function instance.  Only
 mark-and-sweep is able to collect these reference loops at the moment.  If you
-build with reference counting only, function instances may appear to leak memory;
-the memory will be released when the relevant heap is destroyed.</p>
+build with reference counting only (not recommended), function instances may
+appear to leak memory; the memory will be released when the relevant heap is
+destroyed.</p>
 
 <p>You can break the reference loops manually (although this is a bit cumbersome):</p>
 <pre class="ecmascript-code">
@@ -162,7 +163,7 @@ g = null;            // collected immediately, finalizer runs
 h.prototype.constructor = null;
 h = null;            // collected immediately, finalizer runs
 
-// no-op with refcount only, with mark-and-sweep finalizer for 'f' runs
+// mark-and-sweep triggers finalizer for 'f'
 Duktape.gc();
 </pre>
 
@@ -178,12 +179,14 @@ var fn = function myfunc() {
 }
 </pre>
 
-<p>These issues can be avoided by compiling Duktape with mark-and-sweep
-enabled (which is the default).</p>
+<p>Since Duktape 2.x mark-and-sweep is always enabled so that objects
+participating in reference loops are eventually freed.  You can disable
+periodic "voluntary" (non-emergency) mark-and-sweep via config options
+to reduce collection pauses in time sensitive environments.</p>
 
 <h2>Non-standard function 'caller' property limitations</h2>
 
-<p>When <code>DUK_OPT_NONSTD_FUNC_CALLER_PROPERTY</code> is given, Duktape
+<p>When <code>DUK_USE_NONSTD_FUNC_CALLER_PROPERTY</code> is given, Duktape
 updates the <code>caller</code> property of non-strict function instances
 similarly to e.g. V8 and
 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/caller">Spidermonkey</a>.
@@ -202,3 +205,14 @@ There are a few limitations, though:</p>
 
 <p>See the internal <code>test-bi-function-nonstd-caller-prop.js</code> test
 case for further details.</p>
+
+<h2>Garbage collection during debugger paused state</h2>
+
+<p>When debugger support is activated, a debugger session is active, and
+Duktape is paused, there are a few current limitations:</p>
+
+<ul>
+<li>Because garbage collection is disabled during the paused state, calls to
+    <code>Duktape.gc()</code> and <code>duk_gc()</code> will be silently
+    ignored.</li>
+</ul>

@@ -23,7 +23,7 @@ final top: 2
 *** test_2 (duk_safe_call)
 ==> rc=1, result='TypeError: unexpected type'
 *** test_3 (duk_safe_call)
-==> rc=1, result='TypeError: not nativefunction'
+==> rc=1, result='TypeError: nativefunction required, found [object Function] (stack index -1)'
 *** test_4 (duk_safe_call)
 INFO: log line<LF>
 WARN: log line<LF>
@@ -38,7 +38,9 @@ static duk_ret_t my_func(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_c_function(ctx, my_func, 0);
 	duk_push_undefined(ctx);  /* dummy filler */
 
@@ -61,7 +63,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 	duk_pop(ctx);
 
 	/* 0xdeadbeef gets truncated to 0xffffbeef == -16657 */
-	duk_set_magic(ctx, -2, 0xdeadbeef);
+	duk_set_magic(ctx, -2, 0xdeadbeefUL);
 	printf("magic: %ld\n", (long) duk_get_magic(ctx, -2));
 	duk_dup(ctx, -2);
 	duk_call(ctx, 0);
@@ -71,7 +73,9 @@ static duk_ret_t test_1(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	/* duk_get_magic() is strict: incorrect target type throws an error.
 	 * This minimizes compiled function size and magic manipulation is
 	 * rare.
@@ -81,7 +85,9 @@ static duk_ret_t test_2(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_3(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	/* duk_set_magic() is similarly strict. */
 	duk_eval_string(ctx, "(function () {})");
 	duk_set_magic(ctx, -1, 0x4321);
@@ -108,7 +114,9 @@ static duk_ret_t guide_example(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_4(duk_context *ctx) {
+static duk_ret_t test_4(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_c_function(ctx, guide_example, 1);
 	duk_set_magic(ctx, -1, 0);  /* INFO */
 

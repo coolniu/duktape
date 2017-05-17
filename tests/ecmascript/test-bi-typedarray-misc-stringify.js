@@ -2,7 +2,7 @@
  *  Stringify
  */
 
-/*@include util-typedarray.js@*/
+/*@include util-buffer.js@*/
 
 /*===
 stringify test
@@ -20,7 +20,7 @@ stringify test
 ===*/
 
 function stringifyTest() {
-    var objs = getTestObjectList();
+    var objs = getBufferTestObjectList();
 
     objs.forEach(function (b) {
         print(Object.prototype.toString.call(b), b.toString(), String(b));

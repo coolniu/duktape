@@ -62,10 +62,12 @@ final top: 0
 ==> rc=0, result='undefined'
 ===*/
 
-static duk_ret_t test_basic_overlap(duk_context *ctx) {
+static duk_ret_t test_basic_overlap(duk_context *ctx, void *udata) {
 	unsigned char buf[16];
 	int offset;
 	int i;
+
+	(void) udata;
 
 	for (offset = 0; offset <= 8; offset++) {
 		printf("offset: %d\n", offset);
@@ -75,13 +77,13 @@ static duk_ret_t test_basic_overlap(duk_context *ctx) {
 			buf[i] = (unsigned char) (0x11 * i);
 		}
 
-		/* Create two separate external buffer values that point to the
-		 * same underlying C array with some overlap.
+		/* Create two separate external buffer values that point to
+		 * the same underlying C array with some overlap.
 		 */
 		duk_eval_string(ctx,
 			"(function (plain1, plain2) {\n"
-			"    var b1 = new Uint8Array(new ArrayBuffer(plain1));\n"
-			"    var b2 = new Uint8Array(new ArrayBuffer(plain2));\n"
+			"    var b1 = new Uint8Array(plain1.buffer);\n"
+			"    var b2 = new Uint8Array(plain2.buffer);\n"
 			"    print(Duktape.enc('jx', b1));\n"
 			"    print(Duktape.enc('jx', b2));\n"
 			"    b1.set(b2, 4);\n"
@@ -224,10 +226,12 @@ final top: 0
  *  check in the implementation.
  */
 
-static duk_ret_t test_expand_overlap(duk_context *ctx) {
+static duk_ret_t test_expand_overlap(duk_context *ctx, void *udata) {
 	unsigned char buf[48];
 	int offset;
 	int i;
+
+	(void) udata;
 
 	for (offset = 0; offset < 16; offset++) {  /* dst offset */
 		printf("offset: %d\n", offset);
@@ -244,8 +248,8 @@ static duk_ret_t test_expand_overlap(duk_context *ctx) {
 
 		duk_eval_string(ctx,
 			"(function (plain_src, plain_dst) {\n"
-			"    var bsrc = new Uint8Array(new ArrayBuffer(plain_src));\n"
-			"    var bdst = new Uint32Array(new ArrayBuffer(plain_dst));\n"
+			"    var bsrc = new Uint8Array(plain_src.buffer);\n"
+			"    var bdst = new Uint32Array(plain_dst.buffer);\n"
 			"    print(Duktape.enc('jx', bsrc));\n"
 			"    print(Duktape.enc('jx', bdst));\n"
 			"    bdst.set(bsrc, 1);\n"

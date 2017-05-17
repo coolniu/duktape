@@ -1,24 +1,32 @@
 /*===
-*** test_1 (duk_safe_call)
+*** test_program (duk_safe_call)
 program
 program result: 123.000000
 final top: 0
 ==> rc=0, result='undefined'
-*** test_2 (duk_safe_call)
+*** test_eval (duk_safe_call)
 eval result: 5.000000
 final top: 0
 ==> rc=0, result='undefined'
-*** test_3 (duk_safe_call)
+*** test_function (duk_safe_call)
 function result: 11.000000
 final top: 0
 ==> rc=0, result='undefined'
-*** test_4 (duk_safe_call)
+*** test_syntax_error (duk_safe_call)
 compile result: SyntaxError: invalid object literal (line 3) (rc=1)
 final top: 0
 ==> rc=0, result='undefined'
+*** test_constructable_and_name (duk_safe_call)
+hello
+function
+is object: 1
+final top: 1
+==> rc=0, result='undefined'
 ===*/
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_program(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 
 	duk_push_string(ctx, "print('program');\n"
@@ -34,7 +42,9 @@ static duk_ret_t test_1(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_eval(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 
 	duk_push_string(ctx, "2+3");
@@ -48,7 +58,9 @@ static duk_ret_t test_2(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_function(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 
 	duk_push_string(ctx, "function (x,y) { return x+y; }");
@@ -64,8 +76,10 @@ static duk_ret_t test_3(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_4(duk_context *ctx) {
+static duk_ret_t test_syntax_error(duk_context *ctx, void *udata) {
 	duk_ret_t rc;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 
@@ -83,9 +97,23 @@ static duk_ret_t test_4(duk_context *ctx) {
 	return 0;
 }
 
+static duk_ret_t test_constructable_and_name(duk_context *ctx, void *udata) {
+	(void) udata;
+
+	duk_push_string(ctx, "function test() { print('hello'); print(typeof test); }");
+	duk_push_string(ctx, "test.js");
+	duk_compile(ctx, DUK_COMPILE_FUNCTION);
+	duk_new(ctx, 0);
+	printf("is object: %ld\n", (long) duk_is_object(ctx, -1));
+
+	printf("final top: %ld\n", (long) duk_get_top(ctx));
+	return 0;
+}
+
 void test(duk_context *ctx) {
-	TEST_SAFE_CALL(test_1);
-	TEST_SAFE_CALL(test_2);
-	TEST_SAFE_CALL(test_3);
-	TEST_SAFE_CALL(test_4);
+	TEST_SAFE_CALL(test_program);
+	TEST_SAFE_CALL(test_eval);
+	TEST_SAFE_CALL(test_function);
+	TEST_SAFE_CALL(test_syntax_error);
+	TEST_SAFE_CALL(test_constructable_and_name);
 }

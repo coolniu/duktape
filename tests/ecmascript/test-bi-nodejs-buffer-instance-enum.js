@@ -2,7 +2,7 @@
  *  Enumerating a Buffer, keys of a Buffer.
  */
 
-/*@include util-nodejs-buffer.js@*/
+/*@include util-buffer.js@*/
 
 /*===
 enumerating and keys test
@@ -40,9 +40,6 @@ string 7
 string 8
 string 9
 string length
-string byteLength
-string byteOffset
-string BYTES_PER_ELEMENT
 ===*/
 
 function enumeratingAndKeysTest() {
@@ -51,7 +48,7 @@ function enumeratingAndKeysTest() {
 
     b.fill(0x12);
 
-    // Node.js v0.12.1 enumerates index keys, 'buffer', 'parent', and all
+    // Node.js v6.9.1 enumerates index keys, 'buffer', 'parent', and all
     // Buffer.prototype methods (they're enumerable).
     //
     // In Duktape the Buffer.prototype methods are not enumerable as that's
@@ -66,6 +63,10 @@ function enumeratingAndKeysTest() {
     Object.keys(b).forEach(function (k) {
         print(typeof k, k);
     });
+
+    // In ES2015 (and Node.js) .byteOffset, .buffer etc are inherited accessors and
+    // not shown here.  Also .length should be an inherited getter, but is
+    // currently a virtual own property and shows up here.
 
     print('Object.getOwnPropertyNames');
     Object.getOwnPropertyNames(b).forEach(function (k) {

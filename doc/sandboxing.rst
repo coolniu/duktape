@@ -25,9 +25,13 @@ carefully written with these sandboxing goals in mind.
 
 This document describes best practices for Duktape sandboxing.
 
-.. note:: This document is in a rough draft state and describes the current
-          sandboxing status (which is not complete).  Sandboxing shortcomings
-          will be fixed piece by piece in later versions.
+There's a YAML config file with some useful default options for sandboxing,
+and comments on what options you might consider:
+
+* ``config/examples/security_sensitive.yaml``
+
+.. note:: This document described the current status of sandboxing features
+          which is not yet a complete solution.
 
 Suggested measures
 ==================
@@ -37,10 +41,10 @@ Isolation approaches
 
 There are two basic alternatives to sandboxing Ecmascript code with Duktape:
 
-* Use a separate Duktape heap for each sandbox
+* Use a separate Duktape heap for each sandbox.
 
 * Use a separate Duktape thread (with a separate global environment) for
-  each sandbox
+  each sandbox.
 
 Pros and cons of using a Duktape heap for sandboxing:
 
@@ -56,9 +60,11 @@ Pros and cons of using a Duktape heap for sandboxing:
   heap, however.
 
 * One downside is that there is some per-heap overhead which accumulates for
-  each sandbox.  If the memory pool for a heap is pre-allocated, some of the
-  pool will be unused.  If memory is not pre-allocated, actual memory usage
-  is quite tightly bound because of reference counting.
+  each sandbox; ROM built-ins can mitigate some of that effect.  If the memory
+  pool for a heap is pre-allocated and not shared between heaps (in a thread
+  safe manner), some of the pool will be unused.  If memory is not
+  pre-allocated, actual memory usage is quite tightly bound because of
+  reference counting.
 
 Pros and cons of using a Duktape thread for sandboxing:
 
@@ -84,14 +90,15 @@ Disable verbose errors
 
 Verbose error messages may cause sandboxing security issues:
 
-* When DUK_USE_PARANOID_ERRORS is not set, offending object/key is summarized
-  in an error message of some rejected property operations.  If object keys
-  contain potentially sensitive information, you should enable this option.
+* When ``DUK_USE_PARANOID_ERRORS`` is not set, offending object/key is
+  summarized in an error message of some rejected property operations.
+  If object keys contain potentially sensitive information, you should
+  enable this option.  Disable ``DUK_USE_PARANOID_ERRORS``.
 
 * When stack traces are enabled an attacker may gain useful information from
   the stack traces.  Further, access to the internal ``_Tracedata`` property
   provides access to call chain functions even when references to them are not
-  available directly.
+  available directly.  Disable ``DUK_USE_TRACEBACKS``.
 
 Replace the global object
 -------------------------
@@ -110,47 +117,52 @@ Risky bindings:
   which is not ideal.  It may also gain new properties in new Duktape versions,
   which may be easy to accidentally overlook, so the safest default is to hide
   it from sandboxed code.  You can still cherry pick individual functions to
-  be exposed directly or through a wrapper.
-
-* ``Duktape.Buffer`` allows creation of buffers and internal keys (through
-  buffer-to-string coercion) and thus provides access to internal properties.
-  See separate section on internal properties.
-
-* ``Duktape.dec()`` allows decoding of string data into a buffer value and thus
-  provides access to internal properties.
+  be exposed directly or through a wrapper.  You can copy a reference to the
+  ``Duktape`` object e.g. to the global stash which will then be accessible for
+  C code.
 
 * ``Duktape.act()`` provides access to calling functions which may matter to
   some sandboxing environments.
 
 * ``Duktape.fin()`` provides access to setting and getting a finalizer.  Since
   a finalizer may run in a different thread than where it was created,
-  finalizers are a sandboxing risk.
+  finalizers are a sandboxing risk.  It's also possible to override or unset a
+  finalizer which the sandbox relies on.
+
+* Since Duktape 2.x buffer bindings no longer provide a way create hidden
+  Symbols (called "internal strings" in Duktape 1.x) which allow access to
+  internal properties.  See separate section on internal properties.
 
 You should also:
 
-* Remove the ``require`` module loading function in the global object.
-  If you need module loading in the sandbox, it's better to write a specific,
+* Remove the ``require`` module loading function in the global object
+  (since Duktape 2.x it's no longer present by default).  If you need
+  module loading in the sandbox, it's better to write a specific,
   constrained module loader for that environment.
 
 Restrict access to internal properties
 --------------------------------------
 
-Internal properties are intended to be used by Duktape and user C code
-to store "hidden properties" in objects.  The mechanism currently relies on
-using strings with an invalid UTF-8 encoding which cannot normally be
-created by Ecmascript code.  Such properties should be non-writable and
-non-configurable when possible, but it's still a risk to let user code
-access them.
+Internal properties are used by Duktape and user C code to store "hidden
+properties" in objects.  The mechanism currently relies on "hidden Symbols"
+(called "internal keys" or "internal strings" in Duktape 1.x).  These are
+strings whose internal representation contains invalid UTF-8/CESU-8 data
+(see ``doc/symbols.rst`` for description of the current formats).  Because
+all standard Ecmascript strings are represented as CESU-8, such strings cannot
+normally be created by Ecmascript code.  The properties are also never
+enumerated or otherwise exposed to Ecmascript code (not even by
+``Object.getOwnPropertySymbols()``) so that the only way to access them from
+Ecmascript code is to have access to a hidden Symbol acting as the property key.
 
-If Ecmascript code has access to buffer values, it can easily create internal
-keys and then access internal properties, e.g.::
+C code can create hidden Symbols very easily, which can provide a way to access
+internal properties.  For example::
 
-    // With access to Duktape.dec: decodes to \xFFfoo, invalid UTF-8 data
-    var key = Duktape.dec('hex', 'ff666f6f');
+    // Assume an application native binding returns an internal key pushed
+    // using duk_push_string(ctx, "\xff" "Value"):
+    var key = getDangerousKey();
 
-    // With an arbitrary buffer value 'buf' (with length >= 1)
-    buf[0] = 0xff;  // create invalid utf-8 prefix
-    var key = String(buf).substring(0, 1) + 'foo';
+    // Access a Date instance's internal value, not normally accessible.
+    print('Date internal value is:', new Date()[key]);
 
 The risk in being able to access a certain internal property depends on the
 internal property in question.  Some internal properties are non-writable and
@@ -160,22 +172,18 @@ be modified, concrete security issues may arise.  For instance, if an internal
 property stores a raw pointer to a native handle (such as a ``FILE *``),
 changing its value can lead to a potentially exploitable segfault.
 
-To prevent access to internal keys:
+Since Duktape 2.x Ecmascript code cannot create hidden Symbols using standard
+Ecmascript code and the built-in bindings alone.  To prevent access to hidden
+Symbols, ensure that no native bindings provided by the sandboxing environment
+accidentally return such strings.  The easiest way to ensure this is to make
+sure all strings pushed on the value stack are properly CESU-8 encoded.
 
-* Ensure that sandboxed code has no direct access to buffer values, either
-  by creating one using ``Duktape.Buffer`` or through some C binding which
-  returns a buffer value in some way.
+It's also good practice to ensure that sandboxed code has minimal access to
+objects with potentially dangerous properties like raw pointers.
 
-* Ensure that sandboxed code has minimal access to objects with potentially
-  dangerous keys like raw pointers.
-
-* If user code needs to deal with buffers, provide access through an accessor
-  object without giving direct access to the underlying buffer.
-
-The fact that access to buffer values provides access to internal properties
-is not ideal.  There are several future work issues to improve this situation,
-e.g. to prevent access to internal properties from Ecmascript code even with
-the correct internal string key.
+.. note:: There's a future work issue, potentially included in Duktape 3.x,
+          for preventing access to internal properties from Ecmascript code
+          even when using the correct hidden Symbol as a lookup key.
 
 Restrict access to function instances
 -------------------------------------
@@ -190,7 +198,7 @@ Prevent access to function references in the call stack:
 * Prevent access to ``Duktape.act()`` which provides programmatic access to
   the call stack and its function references.
 
-* If ``DUK_OPT_NONSTD_FUNC_CALLER_PROPERTY`` is enabled, the ``caller``
+* If ``DUK_USE_NONSTD_FUNC_CALLER_PROPERTY`` is enabled, the ``caller``
   property provides access to calling functions.  Don't use this option
   with sandboxing, or at least carefully control the ``caller`` property
   values seen by the sandboxed code.
@@ -216,7 +224,9 @@ Suggestions for sandboxing:
   reference directly.
 
 * Write finalizers very carefully.  Make minimal assumptions on which
-  thread they run, i.e. which global object they see.
+  thread they run, i.e. which global object they see.  It's also best
+  practice to tolerate re-entry (although Duktape 1.4.0 and above has
+  a guarantee of no re-entry unless object is rescued).
 
 * For sandboxed environments it may be sensible to make all finalizers
   native code so that they can access the necessary thread contexts
@@ -231,9 +241,9 @@ string methods with a plain base value::
 
     print("foo".toUpperCase());
 
-Duktape 1.0 will use the original built-in prototype functions in these
-inheritance situations.  There is currently no way to replace these built-ins
-so that the replacements would be used for instead (see
+Duktape uses the original built-in prototype functions in these inheritance
+situations.  There is currently no way to replace these built-ins so that the
+replacements would be used for instead (see
 ``test-dev-sandbox-prototype-limitation.js``).
 
 As a result, sandboxed code will always have access to the built-in prototype
@@ -258,7 +268,7 @@ objects which participate in implicit inheritance:
   through explicit construction (if constructors visible) or implicitly
   through internal errors, e.g. ``/foo\123/`` which throws a SyntaxError
 
-* ``Duktape.Buffer.prototype``: through buffer values (if available); since
+* ``Uint8Array.prototype``: through buffer values (if available); since
   there is no buffer literal, user cannot construct buffer values directly
 
 * ``Duktape.Pointer.prototype`` through pointer values (if available); since
@@ -286,13 +296,13 @@ Suggestions for sandboxing:
 **XXX: This will probably need improvement.  There may need to be API to
 replace all built-in values.  They are kept in an internal array so perhaps
 just exposing a primitive to set arbitrary values in the array would be
-sufficient (though cryptic).**
+sufficient (though cryptic).  Some work in https://github.com/svaarala/duktape/pull/566.**
 
 Use the bytecode execution timeout mechanism
 --------------------------------------------
 
 Duktape 1.1 added a simple bytecode execution timeout mechanism, see
-``DUK_OPT_EXEC_TIMEOUT_CHECK`` in ``doc/feature-options.rst``.
+``DUK_USE_EXEC_TIMEOUT_CHECK`` in http://wiki.duktape.org/ConfigOptions.html.
 
 The mechanism and its limitations is described in a separate section below.
 
@@ -315,15 +325,16 @@ Review your C bindings for safety
 ---------------------------------
 
 Review every C binding exposed to the sandbox.  There should be no way to
-violate the safety goals through the C binding.  In particular:
+violate the safety goals through the C binding.  In particular, it shouldn't
+be possible to:
 
-* It shouldn't be possible to cause memory unsafe behavior.
+* Cause memory unsafe behavior regardless of call arguments.
 
-* It shouldn't be possible to execute for an unreasonable amount of time
-  within the C binding.
+* Execute for an unreasonable amount of time.
 
-* It shouldn't be possible to access internal properties indirectly
-  through the C binding.
+* Access internal properties directly or indirectly.
+
+* Push internal strings directly or indirectly.
 
 Particular issues to look out for:
 
@@ -335,9 +346,9 @@ Particular issues to look out for:
   a loop is suspect.  Your goal is to return to the bytecode executor so
   that bytecode execution timeout can happen.
 
-* When creating buffer values, avoid returning them to the caller and
-  avoid using the buffer values e.g. as property lookup keys (which could
-  accidentally access an internal property).
+* When creating string values, ensure they're properly CESU-8 (or UTF-8)
+  encoded.  This ensures internal strings, providing access to internal
+  properties, are not created by accident.
 
 * When calling platform APIs, ensure they can never block indefinitely.
 
@@ -363,7 +374,7 @@ vulnerabilities.  To avoid such issues:
   must match; patch version may vary as bytecode format doesn't change in
   patch versions.
 
-* Ensure integrity of bytecode being loaded e.g. by checksumming.
+* Ensure integrity of bytecode being loaded e.g. by checksumming or signing.
 
 * If bytecode is transported over the network or other unsafe media,
   use cryptographic means (keyed hashing, signatures, or similar) to

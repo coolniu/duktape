@@ -14,25 +14,27 @@ index 9, ToString(result): 'foo', type: 5 -> 5
 index 10, ToString(result): '[object Object]', type: 6 -> 5
 index 11, ToString(result): '123.456', type: 6 -> 4
 index 12, ToString(result): '[object Thread]', type: 6 -> 5
-index 13, ToString(result): '', type: 7 -> 7
-index 14, ToString(result): '', type: 7 -> 7
-index 15, ToString(result): '', type: 7 -> 7
-index 16, ToString(result): '', type: 7 -> 7
+index 13, ToString(result): '[object Uint8Array]', type: 7 -> 5
+index 14, ToString(result): '[object Uint8Array]', type: 7 -> 5
+index 15, ToString(result): '[object Uint8Array]', type: 7 -> 5
+index 16, ToString(result): '[object Uint8Array]', type: 7 -> 5
 index 17, ToString(result): 'null', type: 8 -> 8
 index 18, ToString(result): '0xdeadbeef', type: 8 -> 8
 ==> rc=0, result='undefined'
 *** test_2 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index 3'
 *** test_3 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index -2147483648'
 ===*/
 
 /* XXX: coverage is pretty poor, e.g. different hints are not tested.
  * They are indirectly covered by Ecmascript tests to some extent, though.
  */
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_1(duk_context *ctx, void *udata) {
 	duk_idx_t i, n;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 	duk_push_undefined(ctx);
@@ -54,7 +56,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 	duk_push_dynamic_buffer(ctx, 0);
 	duk_push_dynamic_buffer(ctx, 1024);
 	duk_push_pointer(ctx, (void *) NULL);
-	duk_push_pointer(ctx, (void *) 0xdeadbeef);
+	duk_push_pointer(ctx, (void *) 0xdeadbeefUL);
 
 	n = duk_get_top(ctx);
 	printf("top: %ld\n", (long) n);
@@ -72,14 +74,18 @@ static duk_ret_t test_1(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 	duk_to_primitive(ctx, 3, DUK_HINT_NONE);
 	printf("index 3 OK\n");
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_3(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 	duk_to_primitive(ctx, DUK_INVALID_INDEX, DUK_HINT_NONE);
 	printf("index DUK_INVALID_INDEX OK\n");

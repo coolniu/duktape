@@ -5,7 +5,7 @@
  *  TypedArray specification, both call styles are accepted.
  */
 
-/*@include util-nodejs-buffer.js@*/
+/*@include util-buffer.js@*/
 
 /*---
 {
@@ -17,29 +17,29 @@
 constructor test
 size: 0
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 16
 16 bytes: 00000000000000000000000000000000
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 16 bytes: 00000000000000000000000000000000
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: -1
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: -Infinity
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: NaN
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 1e+50
 RangeError
 RangeError
@@ -51,29 +51,29 @@ RangeError
 RangeError
 size: 1073741824
 1073741824 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 1073741824 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 1073741823
 1073741823 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 1073741823 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 16777216
 16777216 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 16777216 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 268435456
 268435456 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 268435456 bytes: 0000000000000000000000000000000000000000000000000000000000000000...
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 size: 123
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 0 bytes: 
-[object Buffer] -> Buffer.prototype -> Object.prototype
+[object Uint8Array] -> Buffer.prototype -> Uint8Array.prototype -> TypedArray.prototype -> Object.prototype
 array length: 0
 0 bytes: 
 0 bytes: 
@@ -106,6 +106,8 @@ buffer length: 4
 4 bytes: 11223344
 4 bytes: 11223344
 4 bytes: 1122ff44
+4 bytes: 41424344
+4 bytes: 4142ff44
 string length: 0, encoding: undefined
 0 bytes: 
 0 bytes: 
@@ -285,6 +287,24 @@ function constructorTest() {
     b2 = newBuffer(b1);
     b2[2] = 0xff;  // independent copy
     printNodejsBuffer(b1);
+    printNodejsBuffer(b2);
+
+    /*
+     *  ArrayBuffer argument
+     *
+     *  Revised Node.js Buffer semantics are to create a Buffer which shares
+     *  the ArrayBuffer backing store (no copy is made).
+     */
+
+    b1 = new ArrayBuffer(4);
+    u8 = new Uint8Array(b1);
+    u8[0] = 0x41;
+    u8[1] = 0x42;
+    u8[2] = 0x43;
+    u8[3] = 0x44;
+    b2 = new Buffer(b1);
+    printNodejsBuffer(b2);
+    u8[2] = 0xff;
     printNodejsBuffer(b2);
 
     /*

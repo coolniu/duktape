@@ -1,7 +1,7 @@
 name: duk_def_prop
 
 proto: |
-  void duk_def_prop(duk_context *ctx, duk_idx_t obj_index, duk_uint_t flags);
+  void duk_def_prop(duk_context *ctx, duk_idx_t obj_idx, duk_uint_t flags);
 
 stack: |
   [ ... obj! ... key! ] -> [ ... obj! ... ]  (if have no value, setter, getter)
@@ -12,11 +12,16 @@ stack: |
 
 summary: |
   <p>Create or alter the attributes of property <code>key</code> of object at
-  <code>obj_index</code>, with semantics like
+  <code>obj_idx</code>, with semantics like
   <code><a href="http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6">Object.defineProperty()</a></code>.
   When the requested change is not allowed (e.g. property is not configurable), a
   <code>TypeError</code> is thrown.  If the target is not an object (or the
   index is invalid) an error is thrown.</p>
+
+  <p>If the target is a Proxy object which implements the <code>defineProperty</code>
+  trap, the trap should be invoked.  However, Duktape doesn't currently support
+  the <code>defineProperty</code> trap.  When support is added, this API call will
+  start invoking the trap.</p>
 
   <p>The flags field provides "have" flags to indicate what property attributes
   are changed (this models the partial property descriptors allowed by
@@ -35,8 +40,9 @@ summary: |
   <code>Object.defineProperty()</code> and is useful for e.g. sandboxing setup.
   In some cases even a forced change is not possible and will cause an error to be
   thrown.  For instance, properties implemented internally as virtual properties
-  (such as string "length" and index properties) cannot be modified because they
-  don't have concrete internal storage and thus no way of recording changes.</p>
+  may not be modifiable (such as string <code>.length</code> and index properties)
+  or may have limitations (such as array <code>.length</code> property which cannot
+  be made configurable or enumerable due to internal limitations).</p>
 
   <p>Some examples (see further examples below):</p>
   <ul>
@@ -156,5 +162,8 @@ example: |
 tags:
   - property
   - sandbox
+
+seealso:
+  - duk_get_prop_desc
 
 introduced: 1.1.0

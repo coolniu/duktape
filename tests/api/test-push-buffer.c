@@ -41,7 +41,7 @@ dynamic size buffer, close to maximum size_t (should fail)
 ==> rc=1, result='RangeError: buffer too long'
 ===*/
 
-#ifndef  SIZE_MAX
+#if !defined(SIZE_MAX)
 #define  SIZE_MAX  ((size_t) -1)
 #endif
 
@@ -62,8 +62,10 @@ static void rw_test(unsigned char *p, size_t sz) {
 }
 
 /* Basic success test. */
-static duk_ret_t test_1a(duk_context *ctx) {
+static duk_ret_t test_1a(duk_context *ctx, void *udata) {
 	void *buf;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 
@@ -90,8 +92,10 @@ static duk_ret_t test_1a(duk_context *ctx) {
 }
 
 /* Same test, using shortcut functions. */
-static duk_ret_t test_1b(duk_context *ctx) {
+static duk_ret_t test_1b(duk_context *ctx, void *udata) {
 	void *buf;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 
@@ -123,8 +127,10 @@ static duk_ret_t test_1b(duk_context *ctx) {
  * other trouble (separate bug testcase exists for that:
  * test-bug-push-buffer-maxsize.c).
  */
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_2(duk_context *ctx, void *udata) {
 	void *buf;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 
@@ -136,8 +142,10 @@ static duk_ret_t test_2(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_3(duk_context *ctx, void *udata) {
 	void *buf;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 

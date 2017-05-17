@@ -12,19 +12,25 @@
 /*===
 *** test_to_buffer_1 (duk_safe_call)
 0: 66 6f 6f 62 61 72
-1: 40 41 42 43 44 45 46 47 48 49
+1: 00 00 00 00 00 00 00 00 00 00
 2: 60 61 62 63 64 65 66 67 68 69
 3: 60 00 61 00 62 00 63 00 64 00
 final top: 8
 ==> rc=0, result='undefined'
 ===*/
 
-static duk_ret_t test_to_buffer_1(duk_context *ctx) {
+static duk_ret_t test_to_buffer_1(duk_context *ctx, void *udata) {
 	int i, j;
 	unsigned char *p;
 	duk_size_t sz;
 
+	(void) udata;
+
 	duk_eval_string(ctx, "new Buffer('foobar')");
+	/* This is ineffective in Duktape 2.x because ArrayBuffers don't
+	 * have virtual index properties anymore (= standard behavior).
+	 * So the arraybuffer bytes remain zero.
+	 */
 	duk_eval_string(ctx,
 		"(function () {\n"
 		"    var b = new ArrayBuffer(10);\n"
@@ -46,11 +52,9 @@ static duk_ret_t test_to_buffer_1(duk_context *ctx) {
 		"})()\n");
 
 	for (i = 0; i <= 3; i++) {
-		/* Coerce the buffer object into a plain buffer value
-		 * using Duktape.Buffer().  In the initial buffer merge
-		 * there's not yet API support to work with buffer objects
-		 * from the C API (e.g. duk_to_buffer() will go through
-		 * string coercion when the argument is a buffer object).
+		/* Coerce the buffer object into a plain buffer value.
+		 * There's no C API support yet to "break down" a buffer
+		 * object in pure C.
 		 *
 		 * The resulting plain buffer is the underlying buffer
 		 * of the duk_hbufferobject object, without slice/view
@@ -60,7 +64,7 @@ static duk_ret_t test_to_buffer_1(duk_context *ctx) {
 		 */
 
 		duk_eval_string(ctx,
-			"(function (v) { return Duktape.Buffer(v); })");
+			"(function (v) { return Uint8Array.plainOf(v); })");
 		duk_dup(ctx, i);
 		duk_call(ctx, 1);
 

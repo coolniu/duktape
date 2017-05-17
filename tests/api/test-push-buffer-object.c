@@ -9,7 +9,6 @@ static void register_dump_buffer_info(duk_context *ctx) {
 		"    var instof = [];\n"
 		"    var prot = [];\n"
 
-		"    if (v instanceof Duktape.Buffer) { instof.push('Duktape.Buffer'); }\n"
 		"    if (v instanceof Buffer) { instof.push('Buffer'); }\n"
 		"    if (v instanceof ArrayBuffer) { instof.push('ArrayBuffer'); }\n"
 		"    if (v instanceof DataView) { instof.push('DataView'); }\n"
@@ -23,7 +22,6 @@ static void register_dump_buffer_info(duk_context *ctx) {
 		"    if (v instanceof Float32Array) { instof.push('Float32Array'); }\n"
 		"    if (v instanceof Float64Array) { instof.push('Float64Array'); }\n"
 
-		"    if (p === Duktape.Buffer.prototype) { prot.push('Duktape.Buffer.prototype'); }\n"
 		"    if (p === Buffer.prototype) { prot.push('Buffer.prototype'); }\n"
 		"    if (p === ArrayBuffer.prototype) { prot.push('ArrayBuffer.prototype'); }\n"
 		"    if (p === DataView.prototype) { prot.push('DataView.prototype'); }\n"
@@ -38,59 +36,55 @@ static void register_dump_buffer_info(duk_context *ctx) {
 		"    if (p === Float64Array.prototype) { prot.push('Float64Array.prototype'); }\n"
 
 		"    print(typeof v, Object.prototype.toString.call(v), v.length, v.byteOffset, v.byteLength, v.BYTES_PER_ELEMENT, typeof v.buffer);\n"
-		"    print(v instanceof Duktape.Buffer, v instanceof Buffer, v instanceof ArrayBuffer, v instanceof DataView, v instanceof Int8Array, v instanceof Uint8Array, v instanceof Uint8ClampedArray, v instanceof Int16Array, v instanceof Uint16Array, v instanceof Int32Array, v instanceof Uint32Array, v instanceof Float32Array, v instanceof Float64Array, '->', instof.join(','));\n"
-		"    print(p === Duktape.Buffer.prototype, p === Buffer.prototype, p === ArrayBuffer.prototype, p === DataView.prototype, p === Int8Array.prototype, p === Uint8Array.prototype, p === Uint8ClampedArray.prototype, p === Int16Array.prototype, p === Uint16Array.prototype, p === Int32Array.prototype, p === Uint32Array.prototype, p === Float32Array.prototype, p === Float64Array.prototype, '->', prot.join(','));\n"
+		"    print(v instanceof Buffer, v instanceof ArrayBuffer, v instanceof DataView, v instanceof Int8Array, v instanceof Uint8Array, v instanceof Uint8ClampedArray, v instanceof Int16Array, v instanceof Uint16Array, v instanceof Int32Array, v instanceof Uint32Array, v instanceof Float32Array, v instanceof Float64Array, '->', instof.join(','));\n"
+		"    print(p === Buffer.prototype, p === ArrayBuffer.prototype, p === DataView.prototype, p === Int8Array.prototype, p === Uint8Array.prototype, p === Uint8ClampedArray.prototype, p === Int16Array.prototype, p === Uint16Array.prototype, p === Int32Array.prototype, p === Uint32Array.prototype, p === Float32Array.prototype, p === Float64Array.prototype, '->', prot.join(','));\n"
 		"}");
 }
 
 /*===
 *** test_basic (duk_safe_call)
-object [object Buffer] 32 128 32 1 undefined
-true false false false false false false false false false false false false -> Duktape.Buffer
-true false false false false false false false false false false false false -> Duktape.Buffer.prototype
-object [object Buffer] 32 128 32 1 undefined
-false true false false false false false false false false false false false -> Buffer
-false true false false false false false false false false false false false -> Buffer.prototype
-object [object ArrayBuffer] 32 128 32 1 undefined
-false false true false false false false false false false false false false -> ArrayBuffer
-false false true false false false false false false false false false false -> ArrayBuffer.prototype
-object [object DataView] 32 128 32 1 object
-false false false true false false false false false false false false false -> DataView
-false false false true false false false false false false false false false -> DataView.prototype
-object [object Int8Array] 32 128 32 1 object
-false false false false true false false false false false false false false -> Int8Array
-false false false false true false false false false false false false false -> Int8Array.prototype
 object [object Uint8Array] 32 128 32 1 object
-false false false false false true false false false false false false false -> Uint8Array
-false false false false false true false false false false false false false -> Uint8Array.prototype
+true false false false true false false false false false false false -> Buffer,Uint8Array
+true false false false false false false false false false false false -> Buffer.prototype
+object [object ArrayBuffer] undefined undefined 32 undefined undefined
+false true false false false false false false false false false false -> ArrayBuffer
+false true false false false false false false false false false false -> ArrayBuffer.prototype
+object [object DataView] undefined 128 32 undefined object
+false false true false false false false false false false false false -> DataView
+false false true false false false false false false false false false -> DataView.prototype
+object [object Int8Array] 32 128 32 1 object
+false false false true false false false false false false false false -> Int8Array
+false false false true false false false false false false false false -> Int8Array.prototype
+object [object Uint8Array] 32 128 32 1 object
+false false false false true false false false false false false false -> Uint8Array
+false false false false true false false false false false false false -> Uint8Array.prototype
 object [object Uint8ClampedArray] 32 128 32 1 object
-false false false false false false true false false false false false false -> Uint8ClampedArray
-false false false false false false true false false false false false false -> Uint8ClampedArray.prototype
+false false false false false true false false false false false false -> Uint8ClampedArray
+false false false false false true false false false false false false -> Uint8ClampedArray.prototype
 object [object Int16Array] 16 128 32 2 object
-false false false false false false false true false false false false false -> Int16Array
-false false false false false false false true false false false false false -> Int16Array.prototype
+false false false false false false true false false false false false -> Int16Array
+false false false false false false true false false false false false -> Int16Array.prototype
 object [object Uint16Array] 16 128 32 2 object
-false false false false false false false false true false false false false -> Uint16Array
-false false false false false false false false true false false false false -> Uint16Array.prototype
+false false false false false false false true false false false false -> Uint16Array
+false false false false false false false true false false false false -> Uint16Array.prototype
 object [object Int32Array] 8 128 32 4 object
-false false false false false false false false false true false false false -> Int32Array
-false false false false false false false false false true false false false -> Int32Array.prototype
+false false false false false false false false true false false false -> Int32Array
+false false false false false false false false true false false false -> Int32Array.prototype
 object [object Uint32Array] 8 128 32 4 object
-false false false false false false false false false false true false false -> Uint32Array
-false false false false false false false false false false true false false -> Uint32Array.prototype
+false false false false false false false false false true false false -> Uint32Array
+false false false false false false false false false true false false -> Uint32Array.prototype
 object [object Float32Array] 8 128 32 4 object
-false false false false false false false false false false false true false -> Float32Array
-false false false false false false false false false false false true false -> Float32Array.prototype
+false false false false false false false false false false true false -> Float32Array
+false false false false false false false false false false true false -> Float32Array.prototype
 object [object Float64Array] 4 128 32 8 object
-false false false false false false false false false false false false true -> Float64Array
-false false false false false false false false false false false false true -> Float64Array.prototype
+false false false false false false false false false false false true -> Float64Array
+false false false false false false false false false false false true -> Float64Array.prototype
 final top: 0
 ==> rc=0, result='undefined'
 ===*/
 
-static duk_ret_t test_basic(duk_context *ctx) {
+static duk_ret_t test_basic(duk_context *ctx, void *udata) {
 	duk_uint_t test[] = {
-		DUK_BUFOBJ_DUKTAPE_BUFFER,
 		DUK_BUFOBJ_NODEJS_BUFFER,
 		DUK_BUFOBJ_ARRAYBUFFER,
 		DUK_BUFOBJ_DATAVIEW,
@@ -106,6 +100,8 @@ static duk_ret_t test_basic(duk_context *ctx) {
 	};
 	int i;
 	unsigned char extbuf[256];
+
+	(void) udata;
 
 	for (i = 0; i < sizeof(test) / sizeof(duk_uint_t); i++) {
 		switch (i % 3) {
@@ -141,22 +137,22 @@ static duk_ret_t test_basic(duk_context *ctx) {
 *** test_view_buffer_prop (duk_safe_call)
 [object Uint8Array]
 object [object Uint8Array] 22 16 22 1 object
-false false false false false true false false false false false false false -> Uint8Array
-false false false false false true false false false false false false false -> Uint8Array.prototype
+false false false false true false false false false false false false -> Uint8Array
+false false false false true false false false false false false false -> Uint8Array.prototype
 22
 16
 22
 1
 [object ArrayBuffer]
-[object ArrayBuffer] false false false
+function undefined false false
 [object ArrayBuffer]
-object [object ArrayBuffer] 22 16 22 1 undefined
-false false true false false false false false false false false false false -> ArrayBuffer
-false false true false false false false false false false false false false -> ArrayBuffer.prototype
-22
-16
-22
-1
+object [object ArrayBuffer] undefined undefined 38 undefined undefined
+false true false false false false false false false false false false -> ArrayBuffer
+false true false false false false false false false false false false -> ArrayBuffer.prototype
+undefined
+undefined
+38
+undefined
 undefined
 123 123
 extbuf[16 + 3] = 123
@@ -167,9 +163,13 @@ final top: 1
 /* The basic test ensures all typed array views get a .buffer property.
  * Test the .buffer reference in more detail: check that property
  * attributes are correct, check that it backs to the same slice, etc.
+ *
+ * In ES2015 .buffer is inherited from %TypedArrayPrototype% and is a getter.
  */
-static duk_ret_t test_view_buffer_prop(duk_context *ctx) {
+static duk_ret_t test_view_buffer_prop(duk_context *ctx, void *udata) {
 	unsigned char extbuf[256];
+
+	(void) udata;
 
 	duk_push_external_buffer(ctx);
 	duk_config_buffer(ctx, -1, (void *) extbuf, 256);
@@ -185,8 +185,8 @@ static duk_ret_t test_view_buffer_prop(duk_context *ctx) {
 		"    print(v.byteLength);\n"
 		"    print(v.BYTES_PER_ELEMENT);\n"
 		"    print(v.buffer);\n"
-		"    pd = Object.getOwnPropertyDescriptor(v, 'buffer');\n"
-		"    print(pd.value, pd.writable, pd.enumerable, pd.configurable);\n"
+		"    pd = Object.getOwnPropertyDescriptor(v.__proto__.__proto__, 'buffer');\n"
+		"    print(typeof pd.get, typeof pd.set, pd.enumerable, pd.configurable);\n"
 		"    print(Object.prototype.toString.call(v.buffer));\n"
 		"    dumpBufferInfo(v.buffer);\n"
 		"    print(v.buffer.length);\n"  /* some of these are Duktape custom */
@@ -195,7 +195,7 @@ static duk_ret_t test_view_buffer_prop(duk_context *ctx) {
 		"    print(v.buffer.BYTES_PER_ELEMENT);\n"
 		"    print(v.buffer.buffer);\n"
 		"    v[3] = 123;  /* check that backing buffer and slice matches */\n"
-		"    print(v[3], new Uint8Array(v.buffer)[3]);\n"
+		"    print(v[3], new Uint8Array(v.buffer)[v.byteOffset + 3]);\n"
 		"})");
 	duk_dup(ctx, -2);
 	duk_call(ctx, 1);
@@ -210,8 +210,8 @@ static duk_ret_t test_view_buffer_prop(duk_context *ctx) {
 /*===
 *** test_unaligned (duk_safe_call)
 object [object Uint32Array] 16 7 64 4 object
-false false false false false false false false false false true false false -> Uint32Array
-false false false false false false false false false false true false false -> Uint32Array.prototype
+false false false false false false false false false true false false -> Uint32Array
+false false false false false false false false false true false false -> Uint32Array.prototype
 final top: 0
 ==> rc=0, result='undefined'
 ===*/
@@ -220,7 +220,9 @@ final top: 0
  * of the element size (e.g. 4 bytes for Uint32Array) and that the slice ends
  * evenly.  The C API doesn't pose such restrictions.
  */
-static duk_ret_t test_unaligned(duk_context *ctx) {
+static duk_ret_t test_unaligned(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, -1, 7, 64, DUK_BUFOBJ_UINT32ARRAY);
 
@@ -238,8 +240,8 @@ static duk_ret_t test_unaligned(duk_context *ctx) {
 /*===
 *** test_unaligned_uneven (duk_safe_call)
 object [object Uint32Array] 15 7 63 4 object
-false false false false false false false false false false true false false -> Uint32Array
-false false false false false false false false false false true false false -> Uint32Array.prototype
+false false false false false false false false false true false false -> Uint32Array
+false false false false false false false false false true false false -> Uint32Array.prototype
 final top: 0
 ==> rc=0, result='undefined'
 ===*/
@@ -252,7 +254,9 @@ final top: 0
  * .byteLength is 63 here, which means that .length x .BYTES_PER_ELEMENT
  * won't match .byteLength in this case.
  */
-static duk_ret_t test_unaligned_uneven(duk_context *ctx) {
+static duk_ret_t test_unaligned_uneven(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	/* Start at an unaligned offset, with slice length NOT a multiple
 	 * of 4.
 	 */
@@ -273,8 +277,8 @@ static duk_ret_t test_unaligned_uneven(duk_context *ctx) {
 /*===
 *** test_uncovered (duk_safe_call)
 object [object Uint32Array] 128 7 512 4 object
-false false false false false false false false false false true false false -> Uint32Array
-false false false false false false false false false false true false false -> Uint32Array.prototype
+false false false false false false false false false true false false -> Uint32Array
+false false false false false false false false false true false false -> Uint32Array.prototype
 final top: 0
 ==> rc=0, result='undefined'
 ===*/
@@ -284,7 +288,9 @@ final top: 0
  * and external buffers at run time anyway.  In any case, no memory
  * unsafe behavior happens.
  */
-static duk_ret_t test_uncovered(duk_context *ctx) {
+static duk_ret_t test_uncovered(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, -1, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 
@@ -310,19 +316,23 @@ static duk_ret_t test_uncovered(duk_context *ctx) {
 
 /*===
 *** test_invalid_index1 (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: buffer required, found none (stack index -2)'
 *** test_invalid_index2 (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: buffer required, found none (stack index -2147483648)'
 ===*/
 
-static duk_ret_t test_invalid_index1(duk_context *ctx) {
+static duk_ret_t test_invalid_index1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, -2, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
 	return 0;
 }
 
-static duk_ret_t test_invalid_index2(duk_context *ctx) {
+static duk_ret_t test_invalid_index2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, DUK_INVALID_INDEX, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
@@ -331,17 +341,19 @@ static duk_ret_t test_invalid_index2(duk_context *ctx) {
 
 /*===
 *** test_invalid_bufferobject (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: buffer required, found [object Uint16Array] (stack index -1)'
 *** test_invalid_string (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: buffer required, found 'foobar' (stack index -1)'
 *** test_invalid_null (duk_safe_call)
-==> rc=1, result='TypeError: unexpected type'
+==> rc=1, result='TypeError: buffer required, found null (stack index -1)'
 ===*/
 
 /* A bufferobject is -not- accepted as the underlying buffer.  This also
  * prevents issues like a slice being applied to a sliced view.
  */
-static duk_ret_t test_invalid_bufferobject(duk_context *ctx) {
+static duk_ret_t test_invalid_bufferobject(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_eval_string(ctx, "new Uint16Array(123);");
 	duk_push_buffer_object(ctx, -1, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
@@ -349,14 +361,18 @@ static duk_ret_t test_invalid_bufferobject(duk_context *ctx) {
 }
 
 /* A string is not allowed (although this might be useful). */
-static duk_ret_t test_invalid_string(duk_context *ctx) {
+static duk_ret_t test_invalid_string(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_string(ctx, "foobar");
 	duk_push_buffer_object(ctx, -1, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
 	return 0;
 }
 
-static duk_ret_t test_invalid_null(duk_context *ctx) {
+static duk_ret_t test_invalid_null(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_null(ctx);
 	duk_push_buffer_object(ctx, -1, 7, 512, DUK_BUFOBJ_UINT32ARRAY);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
@@ -368,30 +384,36 @@ static duk_ret_t test_invalid_null(duk_context *ctx) {
 final top: 2
 ==> rc=0, result='undefined'
 *** test_invalid_flags2 (duk_safe_call)
-==> rc=1, result='TypeError: invalid call args'
+==> rc=1, result='TypeError: invalid args'
 *** test_invalid_flags3 (duk_safe_call)
-==> rc=1, result='TypeError: invalid call args'
+==> rc=1, result='TypeError: invalid args'
 ===*/
 
-/* If 'flags' is given as zero, it will match a DUK_BUFOBJ_DUKTAPEBUFFER.
+/* If 'flags' is given as zero, it will match a DUK_BUFOBJ_ARRAYBUFFER.
  * So this test succeeds which is intentional.
  */
-static duk_ret_t test_invalid_flags1(duk_context *ctx) {
+static duk_ret_t test_invalid_flags1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, -1, 7, 512, 0 /* no type given, but matches DUK_BUFOBJ_DUKTAPEBUFFER */);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
 	return 0;
 }
 
-static duk_ret_t test_invalid_flags2(duk_context *ctx) {
+static duk_ret_t test_invalid_flags2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
-	duk_push_buffer_object(ctx, -1, 7, 512, (duk_uint_t) 0xdeadbeef /* ERROR: bogus type */);
+	duk_push_buffer_object(ctx, -1, 7, 512, (duk_uint_t) 0xdeadbeefUL /* ERROR: bogus type */);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
 	return 0;
 }
 
 /* Boundary case. */
-static duk_ret_t test_invalid_flags3(duk_context *ctx) {
+static duk_ret_t test_invalid_flags3(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx, -1, 7, 512, (duk_uint_t) (DUK_BUFOBJ_FLOAT64ARRAY + 1) /* ERROR: bogus type, right after last defined */);
 	printf("final top: %ld\n", (long) duk_get_top(ctx));
@@ -400,13 +422,15 @@ static duk_ret_t test_invalid_flags3(duk_context *ctx) {
 
 /*===
 *** test_invalid_offlen_wrap1 (duk_safe_call)
-==> rc=1, result='RangeError: invalid call args'
+==> rc=1, result='RangeError: invalid args'
 *** test_invalid_offlen_wrap2 (duk_safe_call)
-==> rc=1, result='RangeError: invalid call args'
+==> rc=1, result='RangeError: invalid args'
 ===*/
 
 /* Byte offset + byte length wrap. */
-static duk_ret_t test_invalid_offlen_wrap1(duk_context *ctx) {
+static duk_ret_t test_invalid_offlen_wrap1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx,
 	                       -1,
@@ -418,7 +442,9 @@ static duk_ret_t test_invalid_offlen_wrap1(duk_context *ctx) {
 }
 
 /* Byte offset + byte length wrap, just barely */
-static duk_ret_t test_invalid_offlen_wrap2(duk_context *ctx) {
+static duk_ret_t test_invalid_offlen_wrap2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx,
 	                       -1,
@@ -432,8 +458,8 @@ static duk_ret_t test_invalid_offlen_wrap2(duk_context *ctx) {
 /*===
 *** test_allowed_offlen_nowrap1 (duk_safe_call)
 object [object Uint8Array] 99 4294967196 99 1 object
-false false false false false true false false false false false false false -> Uint8Array
-false false false false false true false false false false false false false -> Uint8Array.prototype
+false false false false true false false false false false false false -> Uint8Array
+false false false false true false false false false false false false -> Uint8Array.prototype
 final top: 1
 ==> rc=0, result='undefined'
 ===*/
@@ -442,7 +468,9 @@ final top: 1
  * wrap.  This works and doesn't cause a ~4G allocation because the conceptual
  * size (~4G) is unrelated to the underlying buffer size (256 bytes here).
  */
-static duk_ret_t test_allowed_offlen_nowrap1(duk_context *ctx) {
+static duk_ret_t test_allowed_offlen_nowrap1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_push_fixed_buffer(ctx, 256);
 	duk_push_buffer_object(ctx,
 	                       -1,

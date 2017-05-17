@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 #
 #  Build Duktape website.  Must be run with cwd in the website/ directory.
 #
@@ -107,7 +107,7 @@ def validateAndParseHtml(data):
 	ign_soup = BeautifulSoup(data, 'xml')
 
 	# then parse as lenient html, no xml tags etc
-	soup = BeautifulSoup(data)
+	soup = BeautifulSoup(data, 'lxml')
 
 	return soup
 
@@ -448,7 +448,7 @@ def transformColorizeCode(soup, cssClass, sourceLang):
 		origTitle = elem.get('title', None)
 
 		# source-highlight generates <pre><tt>...</tt></pre>, get rid of <tt>
-		new_elem = BeautifulSoup(colorized).tt    # XXX: parse just a fragment - how?
+		new_elem = BeautifulSoup(colorized, 'lxml').tt    # XXX: parse just a fragment - how?
 		new_elem.name = 'pre'
 		new_elem['class'] = cssClass
 
@@ -465,7 +465,7 @@ def transformFancyStacks(soup):
 			# hack for leading empty line
 			input_str = input_str[1:]
 
-		new_elem = BeautifulSoup(renderFancyStack(input_str)).div  # XXX: fragment?
+		new_elem = BeautifulSoup(renderFancyStack(input_str), 'lxml').div  # XXX: fragment?
 		elem.replace_with(new_elem)
 
 def transformRemoveClass(soup, cssClass):
@@ -490,7 +490,7 @@ def transformReadIncludes(soup, includeDirs):
 			raise Exception('cannot find include file: ' + repr(filename))
 
 		if filename.endswith('.html'):
-			new_elem = BeautifulSoup(d).div
+			new_elem = BeautifulSoup(d, 'lxml').div
 			elem.replace_with(new_elem)
 		else:
 			elem.string = d
@@ -872,7 +872,7 @@ def generateDownloadPage(releases_filename):
 	if fancy_releaselog:
 		# fancy releaselog
 		rel_data = rst2Html(os.path.abspath(os.path.join('..', 'RELEASES.rst')))
-		rel_soup = BeautifulSoup(rel_data)
+		rel_soup = BeautifulSoup(rel_data, 'lxml')
 		released = rel_soup.select('#released')[0]
 		# massage the rst2html generated HTML to be more suitable
 		for elem in released.select('h1'):
@@ -936,23 +936,25 @@ def generateGuide():
 	navlinks.append(['#gettingstarted', 'Getting started'])
 	navlinks.append(['#programming', 'Programming model'])
 	navlinks.append(['#stacktypes', 'Stack types'])
-	navlinks.append(['#ctypes', 'C types'])
+	navlinks.append(['#ctypes', 'API C types'])
 	navlinks.append(['#typealgorithms', 'Type algorithms'])
 	navlinks.append(['#duktapebuiltins', 'Duktape built-ins'])
-	navlinks.append(['#es6features', 'Ecmascript E6 features'])
+	navlinks.append(['#postes5features', 'Post-ES5 features'])
 	navlinks.append(['#custombehavior', 'Custom behavior'])
 	navlinks.append(['#customjson', 'Custom JSON formats'])
 	navlinks.append(['#customdirectives', 'Custom directives'])
 	navlinks.append(['#bufferobjects', 'Buffer objects'])
 	navlinks.append(['#errorobjects', 'Error objects'])
 	navlinks.append(['#functionobjects', 'Function objects'])
+	navlinks.append(['#datetime', 'Date and time'])
+	navlinks.append(['#random', 'Random numbers'])
 	navlinks.append(['#debugger', 'Debugger'])
 	navlinks.append(['#modules', 'Modules'])
 	navlinks.append(['#logging', 'Logging'])
 	navlinks.append(['#finalization', 'Finalization'])
 	navlinks.append(['#coroutines', 'Coroutines'])
 	navlinks.append(['#virtualproperties', 'Virtual properties'])
-	navlinks.append(['#internalproperties', 'Internal properties'])
+	navlinks.append(['#symbols', 'Symbols'])
 	navlinks.append(['#bytecodedumpload', 'Bytecode dump/load'])
 	navlinks.append(['#threading', 'Threading'])
 	navlinks.append(['#sandboxing', 'Sandboxing'])
@@ -987,20 +989,22 @@ def generateGuide():
 	res += processRawDoc('guide/ctypes.html')
 	res += processRawDoc('guide/typealgorithms.html')
 	res += processRawDoc('guide/duktapebuiltins.html')
-	res += processRawDoc('guide/es6features.html')
+	res += processRawDoc('guide/postes5features.html')
 	res += processRawDoc('guide/custombehavior.html')
 	res += processRawDoc('guide/customjson.html')
 	res += processRawDoc('guide/customdirectives.html')
 	res += processRawDoc('guide/bufferobjects.html')
 	res += processRawDoc('guide/errorobjects.html')
 	res += processRawDoc('guide/functionobjects.html')
+	res += processRawDoc('guide/datetime.html')
+	res += processRawDoc('guide/random.html')
 	res += processRawDoc('guide/debugger.html')
 	res += processRawDoc('guide/modules.html')
 	res += processRawDoc('guide/logging.html')
 	res += processRawDoc('guide/finalization.html')
 	res += processRawDoc('guide/coroutines.html')
 	res += processRawDoc('guide/virtualproperties.html')
-	res += processRawDoc('guide/internalproperties.html')
+	res += processRawDoc('guide/symbols.html')
 	res += processRawDoc('guide/bytecodedumpload.html')
 	res += processRawDoc('guide/threading.html')
 	res += processRawDoc('guide/sandboxing.html')
@@ -1088,7 +1092,7 @@ def writeFile(name, data):
 	f.close()
 
 def scrapeDuktapeVersion():
-	f = open(os.path.join('..', 'src', 'duk_api_public.h.in'))
+	f = open(os.path.join('..', 'src-input', 'duktape.h.in'))
 	re_ver = re.compile(r'^#define DUK_VERSION\s+(\d+)L?\s*$')
 	for line in f:
 		line = line.strip()

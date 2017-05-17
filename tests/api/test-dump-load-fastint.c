@@ -4,7 +4,7 @@
 
 /*---
 {
-    "specialoptions": "requires DUK_OPT_FASTINT"
+    "specialoptions": "requires DUK_USE_FASTINT"
 }
 ---*/
 
@@ -18,12 +18,14 @@ final top: 0
 ==> rc=0, result='undefined'
 ===*/
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_1(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	/* copied from polyfills/duktape-isfastint.js */
 	duk_eval_string_noresult(ctx,
 		"Object.defineProperty(Duktape, 'fastintTag', {\n"
 		"    /* Tag number depends on duk_tval packing. */\n"
-		"    value: (Duktape.info(true)[1] >= 0xfff0) ?\n"
+		"    value: (Duktape.info(true).itag >= 0xfff0) ?\n"
 		"            0xfff1 /* tag for packed duk_tval */ :\n"
 		"            1 /* tag for unpacked duk_tval */,\n"
 		"    writable: false,\n"
@@ -32,8 +34,8 @@ static duk_ret_t test_1(duk_context *ctx) {
 		"});\n"
 		"Object.defineProperty(Duktape, 'isFastint', {\n"
 		"    value: function (v) {\n"
-		"        return Duktape.info(v)[0] === 4 &&                 /* public type is DUK_TYPE_NUMBER */\n"
-		"               Duktape.info(v)[1] === Duktape.fastintTag;  /* internal tag is fastint */\n"
+		"        return Duktape.info(v).type === 4 &&                 /* public type is DUK_TYPE_NUMBER */\n"
+		"               Duktape.info(v).itag === Duktape.fastintTag;  /* internal tag is fastint */\n"
 		"    },\n"
                 "    writable: false, enumerable: false, configurable: true\n"
 		"});\n");

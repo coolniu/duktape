@@ -1,9 +1,9 @@
 define: DUK_USE_NONSTD_FUNC_CALLER_PROPERTY
-feature_enables: DUK_OPT_NONSTD_FUNC_CALLER_PROPERTY
 introduced: 1.0.0
 default: false
 tags:
   - ecmascript
+  - compliance
 description: >
   Add a non-standard "caller" property to non-strict function instances
   for better compatibility with existing code.  The semantics of this

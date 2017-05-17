@@ -2,7 +2,7 @@
  *  Very basic view test.
  */
 
-/*@include util-typedarray.js@*/
+/*@include util-buffer.js@*/
 
 /*===
 basic view test
@@ -19,7 +19,7 @@ true true
 ===*/
 
 //  - The given byteOffset must be a multiple of the element size of the specific type, otherwise an exception is raised.
-//  - ES6 agrees: Section 22.2.1.4, Step 10: http://www.ecma-international.org/ecma-262/6.0/index.html#sec-%typedarray%-buffer-byteoffset-length
+//  - ES2015 agrees: Section 22.2.1.4, Step 10: http://www.ecma-international.org/ecma-262/6.0/index.html#sec-%typedarray%-buffer-byteoffset-length
 
 function basicViewTest() {
     var b = new ArrayBuffer(16);
@@ -28,13 +28,13 @@ function basicViewTest() {
 
     print(b);
     print(b.byteLength);
-    print(buf2hex(b));
+    print(bufferToHex(b));
 
     // basic uint8 view
     v = new Uint8Array(b);
     v[5] = 0xaa;
     v[8] = 0x55;
-    print(buf2hex(v));
+    print(bufferToHex(v));
 
     // offsetted and limited view
     v = new Int8Array(b, 5, 3);
@@ -46,14 +46,14 @@ function basicViewTest() {
     v[2] = 0x1c3;
     v[3] = 0x1c4;  // silently dropped, out of view (becomes a concrete property!)
     print('3' in v, v[3] === 0x1c4);
-    print(buf2hex(v));
+    print(bufferToHex(v));
 
     // write signed from one view, read unsigned from another view, offsetted
     v = new Uint8Array(b, 4, 8);  // [4,11]
     v2 = new Int8Array(b, 6, 3);  // [6,8]
     v[4] = 0xfc;
     print(v2[2]);
-    print(buf2hex(v2));
+    print(bufferToHex(v2));
 }
 
 try {

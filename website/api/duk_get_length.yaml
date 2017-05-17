@@ -1,17 +1,17 @@
 name: duk_get_length
 
 proto: |
-  duk_size_t duk_get_length(duk_context *ctx, duk_idx_t index);
+  duk_size_t duk_get_length(duk_context *ctx, duk_idx_t idx);
 
 stack: |
   [ ... val! ... ]
 
 summary: |
-  <p>Get a type-specific "length" for value at <code>index</code>:</p>
+  <p>Get a type-specific "length" for value at <code>idx</code>:</p>
   <ul>
   <li>String: character length of string (<i>not</i> byte length)</li>
   <li>Object: <code>Math.floor(ToNumber(obj.length))</code> if result within
-              32-bit unsigned range; otherwise 0</li>
+              <code>duk_size_t</code> unsigned range; otherwise 0</li>
   <li>Buffer: byte length of buffer</li>
   <li>Other type or invalid stack index: 0</li>
   </ul>
@@ -27,5 +27,8 @@ example: |
 
 tags:
   - stack
+
+seealso:
+  - duk_set_length
 
 introduced: 1.0.0

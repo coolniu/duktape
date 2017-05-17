@@ -18,10 +18,12 @@
  *      4294967295
  */
 
+/*@include util-object.js@*/
+
 /*---
 {
     "custom": true,
-    "specialoptions": "requires DUK_OPT_FASTINT"
+    "specialoptions": "requires DUK_USE_FASTINT"
 }
 ---*/
 
@@ -83,21 +85,18 @@ function printFastint(v) {
         else { prefix = '-'; }
     }
 
-    // Duktape.info() for a non-heap-allocated type has public type tag
-    // followed by internal type tag.  The internal type tag depends on
-    // the duk_tval unpacked/packed layout.  This is pretty fragile but
-    // useful for this testcase.
+    // The internal type tag depends on the duk_tval unpacked/packed layout.
 
     if (typeof Duktape !== 'object') {
         isfast = ' NOT-DUKTAPE';
-    } else if (Duktape.info(true)[1] >= 0xfff0) {
+    } else if (getValueInternalTag(true) >= 0xfff0) {
         // packed duk_tval
-        if (Duktape.info(v)[1] === 0xfff1) {
+        if (getValueInternalTag(v) === 0xfff1) {
             isfast = ' fastint';
         }
-    } else if (Duktape.info(true)[1] === 4) {
+    } else if (getValueInternalTag(true) === 4) {
         // non-packed duk_tval
-        if (Duktape.info(v)[1] === 1) {
+        if (getValueInternalTag(v) === 1) {
             isfast = ' fastint';
         }
     } else {
@@ -1584,7 +1583,7 @@ unary arith in range
 -0 0
 unary out of range
 -0 0
-+0 0 fastint
++0 0
 ===*/
 
 function unaryArithmeticTest() {
@@ -1713,7 +1712,7 @@ return value downgrade test
 
 function retvalDowngradeTest() {
     // All function return values (both Ecmascript and C) are automatically
-    // double-to-fastint downgraded
+    // double-to-fastint downgraded.
 
     function myfunc() {
         var x = 123.0;
@@ -1725,6 +1724,49 @@ function retvalDowngradeTest() {
     printFastint(Math.floor(123.1));
     printFastint('foo'.charCodeAt(1));
     printFastint(myfunc());
+}
+
+/*===
+yield/resume value downgrade test
+x before initial resume
+123 7b
+arg in thread
+123 7b fastint
+x before initial yield
+123 7b
+yield value
+123 7b fastint
+===*/
+
+function yieldResumeDowngradeTest() {
+    // All yielded values are automatically double-to-fastint downgraded.
+    // All resume values are automatically double-to-fastint downgraded.
+
+    print('yield/resume value downgrade test');
+
+    function myThread(arg) {
+        print('arg in thread');
+        printFastint(arg);
+
+        var x = 123.0;
+        x += 0.5; x -= 0.5;
+        print('x before initial yield');
+        printFastint(x);
+        var resumeValue = Duktape.Thread.yield(x);
+
+        print('resume value');
+        printFastint(resumeValue);
+    }
+
+    var t = new Duktape.Thread(myThread);
+
+    var x = 123.0;
+    x += 0.5; x -= 0.5;
+    print('x before initial resume');
+    printFastint(x);
+    var yieldValue = Duktape.Thread.resume(t, x);
+    print('yield value');
+    printFastint(yieldValue);
 }
 
 /*===
@@ -3090,6 +3132,7 @@ try {
     unaryBitopsBrute();
     negativeZeroTest();
     retvalDowngradeTest();
+    yieldResumeDowngradeTest();
     unaryPlusDowngradeTest();
     downgradeSanityTest();
 } catch (e) {

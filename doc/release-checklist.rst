@@ -34,12 +34,15 @@ Checklist for ordinary releases
 
 * Check dist-files/README.rst
 
+  - Update release specific release notes link
+
 * Ensure LICENSE.txt is up-to-date
 
   - Check year range
 
-* Ensure RELEASES.rst is up-to-date (must be done before candidate tar.xz
-  build because dist package contains RELEASES.rst)
+  - Also check ``util/create_spdx_license.py``
+
+* Ensure RELEASES.rst is up-to-date
 
   - New release is in place
 
@@ -52,22 +55,20 @@ Checklist for ordinary releases
 * Compilation tests:
 
   - Clean compile for command line tool with (a) no options and (b) common
-    debug options (DUK_USE_DEBUG, DUK_USE_DPRINT, DUK_USE_SELF_TESTS,
-    DUK_USE_ASSERTIONS)
+    debug options (DUK_USE_DEBUG, DUK_USE_DEBUG_LEVEL=0, DUK_USE_DEBUG_PRINT=...,
+    DUK_USE_SELF_TESTS, DUK_USE_ASSERTIONS)
 
   - Compile both from ``src`` and ``src-separate``.
 
   - Run ``mandel.js`` to test the the command line tool works.
 
+  - Check that ``duk_tval`` is packed by default on x86 and unpacked on
+    x64
+
+  - util/checklist_compile_test.sh: linux compiler/arch combinations,
+    run in dist, check output manually
+
   - Platform / compiler combinations (incomplete, should be automated):
-
-    + Linux x86-64 gcc
-
-    + Linux x86-64 gcc + -m32
-
-    + Linux x86-64 clang
-
-    + Linux x86-64 clang + -m32
 
     + FreeBSD clang
 
@@ -95,13 +96,10 @@ Checklist for ordinary releases
 
   - Check ``make duk-clang``, covers ``-Wcast-align``
 
-* Compile command line tool as a Windows DLL, checks Windows symbol visibility
-  macros::
+* Test genconfig manually using metadata from the distributable
 
-    > cd dist
-    > cl /W3 /O2 /DDUK_OPT_DLL_BUILD /Isrc /LD src\duktape.c
-    > cl /W3 /O2 /DDUK_OPT_DLL_BUILD /Isrc /Feduk.exe examples\cmdline\duk_cmdline.c duktape.lib
-    > duk.exe
+  - Ensure that Duktape compiles with e.g. ``-DDUK_USE_FASTINT`` genconfig
+    argument
 
 * Ecmascript testcases
 
@@ -109,13 +107,13 @@ Checklist for ordinary releases
 
   - On x86-64 (exercise 16-byte duk_tval):
 
-    - make qecmatest   # quick test
+    - make ecmatest
 
-    - VALGRIND_WRAP=1 make qecmatest  # valgrind test
+    - VALGRIND_WRAP=1 make ecmatest  # valgrind test
 
   - On x86-32 (exercise 8-byte duk_tval)
 
-    - make qecmatest   # quick test
+    - make ecmatest
 
   - Run testcases on all endianness targets
 
@@ -127,9 +125,11 @@ Checklist for ordinary releases
 
   - DUK_USE_SHUFFLE_TORTURE
 
-  - DUK_USE_REFZERO_FINALIZER_TORTURE
+  - DUK_USE_FINALIZER_TORTURE
 
-  - DUK_USE_MARKANDSWEEP_FINALIZER_TORTURE + DUK_OPT_GC_TORTURE
+  - DUK_USE_FINALIZER_TORTURE + DUK_USE_GC_TORTURE
+
+  - DUK_USE_STRTAB_TORTURE
 
 * Memory usage testing
 
@@ -152,11 +152,8 @@ Checklist for ordinary releases
 
     - make apitest
 
-* Compile option matrix test
-
-  - Run 1000 iterations of ``util/matrix_compile.py`` which compiles and runs
-    random combinations of feature options and compilers (gcc, g++, clang) on
-    x86, x64, and x32
+    - -Werror is no longer enabled so check apitest output for any test
+      case warnings (or enable -Werror manually in runtests.js)
 
 * Regfuzz
 
@@ -172,42 +169,44 @@ Checklist for ordinary releases
 
   - Run with assertions enabled at least on x86-64
 
-* emscripten (run emscripten-generated code with Duktape)
+* Assorted release tests driven by Makefile
 
-  - on x86-64
+  - on x86-65
 
-    - make emscriptentest
+    - make clean releasetest
 
-* emscripten (compile Duktape with emscripten, run with Node)
+  - Run with assertions enabled at least on x86-64
 
-  - on x86-64
+  - Makefile should now error out if any test fails
 
-    - make emscriptenduktest
+* Debugger test
 
-* emscripten (compile Duktape with emscripten, run with Duktape)
+  - Test Makefile.dukdebug + debugger/duk_debug.js to ensure all files
+    are included (easy to forget e.g. YAML metadata files)
 
-  - on x86-64
+  - Test JSON proxy
 
-    - make emscripteninceptiontest
+* Prepare an update pull for compat-table
 
-* JS-Interpreter
+  - Fork and branch
 
-  - on x86-64
+  - Compile "duk", Duktape.version must match upcoming release
 
-    - make jsinterpretertest
+  - Go through data-*.js files, and copy previous results directly, e.g.
+    "duktape20: false," -> add line "duktape21: false,"
 
-* lua.js
+  - Run "nodejs duktape.js" in compat-table, and update data files to match
+    new results
 
-  - on x86-64
-
-    - make luajstest
+  - Rerun "nodejs build.js", and finalize the pull
 
 * Release notes (``doc/release-notes-*.rst``)
 
-  - Write new release notes for release; needs known issues output from at
-    least API, Ecmascript, and test262 test runs
+  - Write new release notes for release
 
   - Ensure instructions for upgrading from last release are correct
+
+  - Detailed test outputs are no longer included
 
 * Git release and tag
 
@@ -254,10 +253,7 @@ Checklist for ordinary releases
   - Trivial compile test for combined source
 
   - Trivial compile test for separate sources (important because
-    it's easy to forget to add files in make_dist.sh)
-
-  - Test Makefile.dukdebug + debugger/duk_debug.js to ensure all files
-    are included (easy to forget e.g. YAML metadata files)
+    it's easy to forget to add files in util/dist.py)
 
 * Store binaries to duktape-releases repo
 
@@ -320,7 +316,7 @@ Checklist for ordinary releases
     from 1000 to 1099.  This ensures that any forks off the trunk will have a
     version number easy to distinguish as an unofficial release.
 
-  - ``src/duk_api_public.h.in``
+  - ``src/duktape.h.in``
 
 Checklist for maintenance releases
 ==================================
@@ -333,12 +329,17 @@ Checklist for maintenance releases
 
 * Bump DUK_VERSION in maintenance branch.
 
+* Check dist-files/Makefile.sharedlibrary; currently duplicates version
+  number and needs to be fixed manually.
+
 * Review diff between previous release and new patch release.
 
 * Tag release, description "maintenance release" should be good enough for
   most patch releases.
 
-* Build release, push it to ``duktape-releases`` in binary and unpacked form.
+* Build release.  Compare release to previous release package by diffing the
+  unpacked directories.  The SPDX license can be diffed by sorting the files
+  first and then using diff -u.
 
 * Build website from master.  Deploy only ``download.html``.
 

@@ -27,12 +27,15 @@ only applied in specific situations.  Currently:
 * All function return values are automatically downgraded to fastints if
   possible.
 
+* Thread yield/resume values are automatically downgraded to fastints if
+  possible.
+
 Fastints don't affect Ecmascript semantics and are completely transparent
 to user C and Ecmascript code: all conversions are automatic.
 
-To enable fastint support, simply define the feature option:
+To enable fastint support, simply define:
 
-* ``DUK_OPT_FASTINT``
+* ``DUK_USE_FASTINT``
 
 You should measure the impact of enabling fastint support for your target
 platform and Ecmascript code base.  Fastint support is not an automatic
@@ -179,8 +182,8 @@ necessary information (in a highly fragile manner though).  For instance,
 you can use something like::
 
   /* Fastint tag depends on duk_tval packing */
-  var fastintTag = (Duktape.info(true)[1] === 0xfff5 ?
-                   0xfff2 /* tag for packed duk_tval) :
+  var fastintTag = (Duktape.info(true)[1] >= 0xfff0 ?
+                   0xfff1 /* tag for packed duk_tval) :
                    1 /* tag for unpacked duk_tval */ );
 
   function isFastint(x) {
@@ -206,7 +209,7 @@ A few notes on how fastints are used internally, what macros are used, etc.
 Fastint aware vs. unware code
 -----------------------------
 
-Fastint support is optional and added between ifdefs::
+Fastint support is optional and added between ``#if defined()`` guards::
 
   #if defined(DUK_USE_FASTINT)
   ...
@@ -349,14 +352,11 @@ that the value is fastint compatible) uses::
   /* 'i' must be in 32-bit signed range */
   DUK_TVAL_SET_FASTINT_I32(tv, i);  /* i is duk_int32_t */
 
-The following macros are available even when fastints are disabled::
-
-  DUK_TVAL_SET_DOUBLE(tv, d);
-  DUK_TVAL_SET_NUMBER_CHKFAST(tv, d);
-
-When fastints are disabled the macros will just write a double with no
-checks or additional overhead.  This is just a convenience to reduce the
-number of ifdefs.
+The macros are also available when fastints are disabled, and will just
+write a double with no checks or additional overhead.  This is just a
+convenience to reduce the number of ``#if defined()`` guards in call sites.
+For example, ``DUK_TVAL_SET_FASTINT_U32`` coerces the uint32 argument to a
+double when fastints are disabled.
 
 In-place double-to-fastint downgrade check
 ------------------------------------------

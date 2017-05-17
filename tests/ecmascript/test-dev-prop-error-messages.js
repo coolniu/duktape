@@ -2,6 +2,9 @@
  *  Fragile testcase for testing property error messages.
  */
 
+/*@include util-buffer.js@*/
+/*@include util-string.js@*/
+
 /*---
 {
     "custom": true
@@ -36,10 +39,10 @@ TypeError: cannot delete property 'foo' of null
 "TypeError: cannot write property [object Array] of null"
 "TypeError: cannot write property [object Object] of null"
 "TypeError: cannot write property [object Function] of null"
-"TypeError: cannot write property PTR of null"
+"TypeError: cannot write property (PTR) of null"
 "TypeError: cannot write property [object Pointer] of null"
 "TypeError: cannot write property [buffer:5] of null"
-"TypeError: cannot write property [object Buffer] of null"
+"TypeError: cannot write property [object ArrayBuffer] of null"
 ===*/
 
 function test() {
@@ -78,20 +81,20 @@ function test() {
         '\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345',  // 32 unicode chars
         '\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\u1234\u2345\ucafe',  // 33 unicode chars
         longstring,
-	'\u0000\u001f\u0027\u005c\u007f',  // some escaped chars
+        '\u0000\u001f\u0027\u005c\u007f',  // some escaped chars
         [ 1, 2, 3 ],
         { foo:'bar' },
         function test() {},
         Duktape.Pointer('dummy'),
         new Duktape.Pointer('dummy'),
-        Duktape.Buffer('dummy'),
-        new Duktape.Buffer('dummy'),
+        createPlainBuffer('dummy'),
+        createArrayBuffer('dummy')
     ].forEach(function (v) {
         try {
             null[v] = 123;
         } catch (e) {
             tmp = Duktape.enc('jx', String(e));  // JX encode to get ASCII
-            tmp = tmp.replace(/\s0x[0-9a-fA-F]+\s/, ' PTR ');  // replace pointer for expect string
+            tmp = sanitizePointers(tmp);
             print(tmp);
         }
     });

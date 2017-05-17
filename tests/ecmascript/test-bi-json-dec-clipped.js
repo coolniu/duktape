@@ -11,6 +11,8 @@
  *  the full document with no trailing bytes parses correctly.
  */
 
+/*@include util-buffer.js@*/
+
 /*---
 {
     "custom": true
@@ -49,9 +51,9 @@ function jsonClipTest(input, parser) {
             try {
                 t = input.substring(0, i);
                 if (j >= 0) {
-                    buf = Duktape.Buffer(1);
+                    buf = createPlainBuffer(1);
                     buf[0] = j;
-                    t = t + buf;
+                    t = t + bufferToStringRaw(buf);
                 }
                 if (parser === 'json') {
                     t = JSON.parse(t);
@@ -63,8 +65,10 @@ function jsonClipTest(input, parser) {
                     throw new Error('invalid parser: ' + parser);
                 }
             } catch (e) {
-                // print error if original input doesn't parse (expected for some tests)
-                if ((i == input.length && j == -1) || e.name !== 'SyntaxError') {
+                if ((j == 255 || (j & 0xc0) == 0x80) && e.name === 'TypeError') {
+                    // if initial byte starts a Symbol, TypeError is expected
+                } else if ((i == input.length && j == -1) || e.name !== 'SyntaxError') {
+                    // print error if original input doesn't parse (expected for some tests)
                     print(i, j, e.name);
                 }
             }

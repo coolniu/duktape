@@ -21,13 +21,15 @@ index 16, is-undefined: 1
 index 17, is-undefined: 1
 ==> rc=0, result='undefined'
 *** test_2 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index 3'
 *** test_3 (duk_safe_call)
-==> rc=1, result='Error: invalid index'
+==> rc=1, result='RangeError: invalid stack index -2147483648'
 ===*/
 
-static duk_ret_t test_1(duk_context *ctx) {
+static duk_ret_t test_1(duk_context *ctx, void *udata) {
 	duk_idx_t i, n;
+
+	(void) udata;
 
 	duk_set_top(ctx, 0);
 	duk_push_undefined(ctx);
@@ -47,7 +49,7 @@ static duk_ret_t test_1(duk_context *ctx) {
 	duk_push_dynamic_buffer(ctx, 0);
 	duk_push_dynamic_buffer(ctx, 1024);
 	duk_push_pointer(ctx, (void *) NULL);
-	duk_push_pointer(ctx, (void *) 0xdeadbeef);
+	duk_push_pointer(ctx, (void *) 0xdeadbeefUL);
 
 	n = duk_get_top(ctx);
 	printf("top: %ld\n", (long) n);
@@ -59,14 +61,18 @@ static duk_ret_t test_1(duk_context *ctx) {
 	return 0;
 }
 
-static duk_ret_t test_2(duk_context *ctx) {
+static duk_ret_t test_2(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 	duk_to_undefined(ctx, 3);
 	printf("index 3 OK\n");
 	return 0;
 }
 
-static duk_ret_t test_3(duk_context *ctx) {
+static duk_ret_t test_3(duk_context *ctx, void *udata) {
+	(void) udata;
+
 	duk_set_top(ctx, 0);
 	duk_to_undefined(ctx, DUK_INVALID_INDEX);
 	printf("index DUK_INVALID_INDEX OK\n");

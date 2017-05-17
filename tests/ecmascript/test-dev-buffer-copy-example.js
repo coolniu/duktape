@@ -1,6 +1,8 @@
 /*
- *  Making a copy of a plain buffer with Ecmascript code (example in guide).
+ *  Making a copy of a plain buffer with Ecmascript code.
  */
+
+/*@include util-buffer.js@*/
 
 /*---
 {
@@ -9,33 +11,33 @@
 ---*/
 
 /*===
-buffer ABCD
-buffer ABCD
+object [object Uint8Array] true ABCD
+object [object Uint8Array] true ABCD
 false
 buf: ABCD
 copy: XBCD
 ===*/
 
 function bufferCopyTest() {
-    var buf = Duktape.dec('hex', '41424344');  // ABCD
-    print(typeof buf, buf);
+    // Create a plain buffer.
+    var buf = createPlainBuffer('ABCD');
+    print(typeof buf, buf, isPlainBuffer(buf), bufferToStringRaw(buf));
 
-    // Create a Duktape.Buffer object which is accepted by Uint8Array
-    // constructor.  The constructor creates a new buffer and copies
-    // the input bytes into the new buffer.  Finally, Duktape.Buffer
-    // extracts the underlying copied buffer.
+    // Plain buffer mimics Uint8Array so it can be used as an initializer
+    // for e.g. new Uint8Array().  The result will be an Uint8Array object
+    // but can be converted to a plain buffer using Uint8Array.plainOf().
     //
-    // (Right now Uint8Array() doesn't accept a plain buffer value
-    // but that might change in later versions.)
+    // A Duktape specific alternative which creates a plain buffer directly:
+    // var copy = Uint8Array.createPlain(buf);
 
-    var copy = Duktape.Buffer(new Uint8Array(new Duktape.Buffer(buf)));
-    print(typeof copy, copy);
+    var copy = Uint8Array.plainOf(new Uint8Array(buf));
+    print(typeof copy, copy, isPlainBuffer(copy), bufferToStringRaw(buf));
     print(copy === buf);
 
-    // Demonstrate independence
+    // Demonstrate independence.
     copy[0] = ('X').charCodeAt(0);
-    print('buf:', buf);
-    print('copy:', copy);
+    print('buf:', bufferToStringRaw(buf));
+    print('copy:', bufferToStringRaw(copy));
 }
 
 try {
